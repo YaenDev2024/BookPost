@@ -4,7 +4,11 @@ import {TextInput} from 'react-native-gesture-handler';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import logo1 from '../../../assets/2.png';
-const BirthdayScreenRegister = () => {
+const BirthdayScreenRegister = ({route,navigation}) => {
+
+
+  const { user, pass } = route.params;
+
   const [date, setDate] = useState(new Date());
   const [mode, setMode] = useState('date');
   const [show, setShow] = useState(false);
@@ -30,14 +34,12 @@ const BirthdayScreenRegister = () => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton}>
-        <Icon name="arrow-left" size={30} color="#4F8EF7" />
+      <TouchableOpacity style={styles.backButton} onPress={() =>navigation.goBack()}>
+        <Icon name="arrow-left" size={30} color="#4b4b4b" />
       </TouchableOpacity>
-
       <View style={styles.logoContainer}>
         <Image style={styles.logoIcon} source={logo1} />
       </View>
-
       <View style={styles.containerForms}>
         <Text style={styles.label}>Your birthday?:</Text>
         <View>
@@ -57,19 +59,18 @@ const BirthdayScreenRegister = () => {
           />
         )}
       </View>
-
       <View style={styles.containerBtns}>
         <TouchableOpacity style={styles.buttonLogin}>
           <Text style={styles.buttonText}>Next</Text>
         </TouchableOpacity>
       </View>
-
       <View style={styles.footer}>
         <Text>BookPost Inc 2024.</Text>
       </View>
     </View>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

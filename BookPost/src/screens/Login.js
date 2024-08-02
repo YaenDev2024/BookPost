@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Alert,
   Button,
@@ -9,17 +9,74 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Dimensions} from 'react-native';
-import {TextInput} from 'react-native';
+import { Dimensions } from 'react-native';
+import { TextInput } from 'react-native';
 import logo from '../../assets/bookpost.png';
 import logo1 from '../../assets/2.png';
+import { addDoc, collection, query, where, getDocs } from '@firebase/firestore';
+import { db } from '../../config';
 
-const {width, height} = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
-const Login = ({navigation}) => {
+const Login = ({ navigation }) => {
 
-  const ToRegister = () =>{
+  const [user, setUser] = useState('');
+  const [password, setPassword] = useState('');
+  const [fail, setFail] = useState(false);
+
+  const [emptyInput, setEmptyInputUser] = useState(false);
+  const [emptyPass, setEmptyPass] = useState(false);
+
+  const toRegister = () => {
     navigation.push('Sign Up');
+  }
+
+  const handlePassword = (pass) => {
+    setPassword(pass);
+  }
+
+  const handleUser = (user) => {
+    setUser(user);
+  }
+
+  const checkIfExist = async () => {
+    let isEmpty = false;
+
+    if (user === '' || user === undefined || user === null) {
+      setEmptyInputUser(true);
+      isEmpty = true;
+    } else {
+      setEmptyInputUser(false);
+    }
+    if (password === '' || password === undefined || password === null) {
+      setEmptyPass(true);
+      isEmpty = true;
+    } else {
+      setEmptyPass(false);
+    }
+
+    if (isEmpty) {
+      setTimeout(() => {
+        setEmptyPass(false);
+        setEmptyInputUser(false);
+        setFail(false);
+      }, 2000);
+      return;
+    }
+
+    const q = query(
+      collection(db, 'users'),
+      where('mail', '==', user),
+    );
+
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      setFail(true);
+    } else {
+      setFail(false);
+      navigation.push('Home');
+    }
   }
 
   return (
@@ -37,21 +94,40 @@ const Login = ({navigation}) => {
 
       <View style={styles.containerForms}>
         <Text style={styles.label}>User or Mail:</Text>
-        <TextInput style={styles.input} placeholder="Enter your email" />
+        <TextInput
+          style={emptyInput ? styles.inputFail : styles.input}
+          onChangeText={handleUser}
+          placeholder="Enter your email"
+          value={user}
+        />
         <Text style={styles.label}>Password:</Text>
         <TextInput
-          style={styles.input}
+          style={emptyPass ? styles.inputFail : styles.input}
+          onChangeText={handlePassword}
           placeholder="Enter your password"
           secureTextEntry
+          value={password}
         />
+        {fail ?
+          <Text style={{ textAlign: 'center', color: 'red' }}>The user or mail doesn't exist! Please check!</Text> : null
+        }
+        {emptyInput && !emptyPass ?
+          <Text style={{ textAlign: 'center', color: 'red' }}>The user input is empty! Please check!</Text> : null
+        }
+        {emptyPass && !emptyInput ?
+          <Text style={{ textAlign: 'center', color: 'red' }}>The password input is empty! Please check!</Text> : null
+        }
+        {emptyInput && emptyPass ?
+          <Text style={{ textAlign: 'center', color: 'red' }}>Both inputs are empty! Please check!</Text> : null
+        }
       </View>
 
       <View style={styles.containerBtns}>
         <Text style={styles.pass}>Forgot your password?</Text>
-        <TouchableOpacity style={styles.buttonLogin}>
+        <TouchableOpacity style={styles.buttonLogin} onPress={checkIfExist}>
           <Text style={styles.buttonText}>Login</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.buttonLogin} onPress={() =>ToRegister()}>
+        <TouchableOpacity style={styles.buttonLogin} onPress={toRegister}>
           <Text style={styles.buttonText}>Register</Text>
         </TouchableOpacity>
         <View style={styles.footer}>
@@ -67,8 +143,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16, // Añadir un padding general
-    backgroundColor: '#f9f9f9', // Color de fondo más suave
+    padding: 16,
+    backgroundColor: '#f9f9f9',
   },
   logoContainer: {
     alignItems: 'flex-start',
@@ -85,7 +161,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   containerForms: {
-    width: '100%', // Ocupar todo el ancho
+    width: '100%',
     marginBottom: 20,
     marginTop: -50,
   },
@@ -105,10 +181,20 @@ const styles = StyleSheet.create({
     marginLeft: 20,
     marginRight: 35,
   },
+  inputFail: {
+    height: 50,
+    marginBottom: 12,
+    borderWidth: 1,
+    padding: 10,
+    borderRadius: 10,
+    borderColor: 'red',
+    marginLeft: 20,
+    marginRight: 35,
+  },
   buttonLogin: {
     backgroundColor: '#4b4b4b',
-    width: 200, // Usa un porcentaje para hacerlo responsivo
-    height: 50, // Aumenta la altura para hacer el botón más grande
+    width: 200,
+    height: 50,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -124,7 +210,7 @@ const styles = StyleSheet.create({
   footer: {
     justifyContent: 'flex-end',
     alignItems: 'center',
-    marginTop: 'auto', // Colocar el footer al final
+    marginTop: 'auto',
     paddingVertical: 20,
   },
 });
