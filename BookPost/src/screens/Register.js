@@ -52,6 +52,7 @@ const Register = ({ navigation }) => {
       return;
     }
 
+    
     navigation.navigate('NextBirthday', {
       user: user,
       pass: password,
@@ -108,8 +109,6 @@ const Register = ({ navigation }) => {
         <Text>BookPost Inc 2024.</Text>
       </View>
       </View>
-
-    
     </View>
   );
 };

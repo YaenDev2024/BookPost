@@ -4,6 +4,9 @@ import {TextInput} from 'react-native-gesture-handler';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import logo1 from '../../../assets/2.png';
+import { auth, db } from '../../../config';
+import { createUserWithEmailAndPassword } from '@firebase/auth';
+import { addDoc, collection } from '@firebase/firestore';
 const BirthdayScreenRegister = ({route,navigation}) => {
 
 
@@ -31,6 +34,31 @@ const BirthdayScreenRegister = ({route,navigation}) => {
   const showTimepicker = () => {
     showMode('time');
   };
+
+
+  const saveCredentials = () =>{
+    try {
+      //const auth = getAuth();
+      createUserWithEmailAndPassword(auth, user, pass)
+        .then(async () => {
+          try {
+            const docRef = await addDoc(collection(db, 'users'), {
+              username: user,
+              mail: user,
+              pass: pass,
+              birthday: date
+            });
+          } catch (err) {
+            console.error('Error adding document: ', err);
+          }
+        })
+        .catch(err => {
+          Alert.alert(err);
+        });
+    } catch (error) {
+      console.error('Error al iniciar sesión:', error);
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -60,7 +88,7 @@ const BirthdayScreenRegister = ({route,navigation}) => {
         )}
       </View>
       <View style={styles.containerBtns}>
-        <TouchableOpacity style={styles.buttonLogin}>
+        <TouchableOpacity style={styles.buttonLogin} onPress={saveCredentials}>
           <Text style={styles.buttonText}>Next</Text>
         </TouchableOpacity>
       </View>
