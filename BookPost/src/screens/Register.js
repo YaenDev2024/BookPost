@@ -43,6 +43,14 @@ const Register = ({ navigation }) => {
       setEmptyPass(false);
     }
 
+    if (user.length < 10) {
+      Alert.alert("Error", "The mail has a incorrect format")
+      return;
+    }
+    if (password.length < 5) {
+      Alert.alert("Error", "The password must be have more than 5 caracters")
+      return;
+    }
     if (isEmpty) {
       setTimeout(() => {
         setEmptyPass(false);
@@ -52,15 +60,13 @@ const Register = ({ navigation }) => {
       return;
     }
 
-    
+
     navigation.navigate('NextBirthday', {
       user: user,
       pass: password,
     });
   }
-
-
-
+  
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -106,8 +112,8 @@ const Register = ({ navigation }) => {
           <Text style={styles.buttonText} >Next</Text>
         </TouchableOpacity>
         <View style={styles.footer}>
-        <Text>BookPost Inc 2024.</Text>
-      </View>
+          <Text>BookPost Inc 2024.</Text>
+        </View>
       </View>
     </View>
   );

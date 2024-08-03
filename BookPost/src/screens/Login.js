@@ -14,12 +14,15 @@ import { TextInput } from 'react-native';
 import logo from '../../assets/bookpost.png';
 import logo1 from '../../assets/2.png';
 import { addDoc, collection, query, where, getDocs } from '@firebase/firestore';
-import { db } from '../../config';
+import { auth, db } from '../../config';
+import { signInWithEmailAndPassword } from '@firebase/auth';
+import LoadingScreen from '../hooks/LoadingScreen';
 
 const { width, height } = Dimensions.get('window');
 
 const Login = ({ navigation }) => {
 
+  const [load, setLoad] = useState(true)
   const [user, setUser] = useState('');
   const [password, setPassword] = useState('');
   const [fail, setFail] = useState(false);
@@ -75,66 +78,81 @@ const Login = ({ navigation }) => {
       setFail(true);
     } else {
       setFail(false);
-      navigation.push('Home');
+      try {
+        await signInWithEmailAndPassword(auth, user, password);
+      } catch (error) {
+        Alert.alert('Login Error', error.message);
+      } finally {
+        //setLoading(false);
+      }
     }
   }
 
+  setTimeout(() => {
+    setLoad(false)
+  }, 1000);
+
   return (
-    <View style={styles.container}>
-      <StatusBar
-        translucent
-        backgroundColor={'transparent'}
-        barStyle="dark-content"
-      />
+    <>
+      {load ? <LoadingScreen /> : <>
+        <View style={styles.container}>
+          <StatusBar
+            translucent
+            backgroundColor={'transparent'}
+            barStyle="dark-content"
+          />
 
-      <View style={styles.logoContainer}>
-        <Image style={styles.logoIcon} source={logo1} />
-        <Image style={styles.imgLogo} source={logo} />
-      </View>
+          <View style={styles.logoContainer}>
+            <Image style={styles.logoIcon} source={logo1} />
+            <Image style={styles.imgLogo} source={logo} />
+          </View>
 
-      <View style={styles.containerForms}>
-        <Text style={styles.label}>User or Mail:</Text>
-        <TextInput
-          style={emptyInput ? styles.inputFail : styles.input}
-          onChangeText={handleUser}
-          placeholder="Enter your email"
-          value={user}
-        />
-        <Text style={styles.label}>Password:</Text>
-        <TextInput
-          style={emptyPass ? styles.inputFail : styles.input}
-          onChangeText={handlePassword}
-          placeholder="Enter your password"
-          secureTextEntry
-          value={password}
-        />
-        {fail ?
-          <Text style={{ textAlign: 'center', color: 'red' }}>The user or mail doesn't exist! Please check!</Text> : null
-        }
-        {emptyInput && !emptyPass ?
-          <Text style={{ textAlign: 'center', color: 'red' }}>The user input is empty! Please check!</Text> : null
-        }
-        {emptyPass && !emptyInput ?
-          <Text style={{ textAlign: 'center', color: 'red' }}>The password input is empty! Please check!</Text> : null
-        }
-        {emptyInput && emptyPass ?
-          <Text style={{ textAlign: 'center', color: 'red' }}>Both inputs are empty! Please check!</Text> : null
-        }
-      </View>
+          <View style={styles.containerForms}>
+            <Text style={styles.label}>User or Mail:</Text>
+            <TextInput
+              style={emptyInput ? styles.inputFail : styles.input}
+              onChangeText={handleUser}
+              placeholder="Enter your email"
+              value={user}
+            />
+            <Text style={styles.label}>Password:</Text>
+            <TextInput
+              style={emptyPass ? styles.inputFail : styles.input}
+              onChangeText={handlePassword}
+              placeholder="Enter your password"
+              secureTextEntry
+              value={password}
+            />
+            {fail ?
+              <Text style={{ textAlign: 'center', color: 'red' }}>The user or mail doesn't exist! Please check!</Text> : null
+            }
+            {emptyInput && !emptyPass ?
+              <Text style={{ textAlign: 'center', color: 'red' }}>The user input is empty! Please check!</Text> : null
+            }
+            {emptyPass && !emptyInput ?
+              <Text style={{ textAlign: 'center', color: 'red' }}>The password input is empty! Please check!</Text> : null
+            }
+            {emptyInput && emptyPass ?
+              <Text style={{ textAlign: 'center', color: 'red' }}>Both inputs are empty! Please check!</Text> : null
+            }
+          </View>
 
-      <View style={styles.containerBtns}>
-        <Text style={styles.pass}>Forgot your password?</Text>
-        <TouchableOpacity style={styles.buttonLogin} onPress={checkIfExist}>
-          <Text style={styles.buttonText}>Login</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.buttonLogin} onPress={toRegister}>
-          <Text style={styles.buttonText}>Register</Text>
-        </TouchableOpacity>
-        <View style={styles.footer}>
-          <Text>BookPost Inc 2024.</Text>
+          <View style={styles.containerBtns}>
+            <Text style={styles.pass}>Forgot your password?</Text>
+            <TouchableOpacity style={styles.buttonLogin} onPress={checkIfExist}>
+              <Text style={styles.buttonText}>Login</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.buttonLogin} onPress={toRegister}>
+              <Text style={styles.buttonText}>Register</Text>
+            </TouchableOpacity>
+            <View style={styles.footer}>
+              <Text>BookPost Inc 2024.</Text>
+            </View>
+          </View>
         </View>
-      </View>
-    </View>
+      </>
+      }
+    </>
   );
 };
 

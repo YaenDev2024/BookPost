@@ -1,20 +1,30 @@
-import React, {useState} from 'react';
-import {Button, Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {TextInput} from 'react-native-gesture-handler';
+import React, { useState } from 'react';
+import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { TextInput } from 'react-native-gesture-handler';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import logo1 from '../../../assets/2.png';
 import { auth, db } from '../../../config';
 import { createUserWithEmailAndPassword } from '@firebase/auth';
 import { addDoc, collection } from '@firebase/firestore';
-const BirthdayScreenRegister = ({route,navigation}) => {
 
-
+const BirthdayScreenRegister = ({ route, navigation }) => {
   const { user, pass } = route.params;
 
   const [date, setDate] = useState(new Date());
   const [mode, setMode] = useState('date');
   const [show, setShow] = useState(false);
+
+  const getdate = () => {
+    const fechaActual = new Date();
+    const dia = String(fechaActual.getDate()).padStart(2, '0');
+    const mes = String(fechaActual.getMonth() + 1).padStart(2, '0');
+    const anio = fechaActual.getFullYear();
+    const horas = String(fechaActual.getHours()).padStart(2, '0');
+    const minutos = String(fechaActual.getMinutes()).padStart(2, '0');
+    const segundos = String(fechaActual.getSeconds()).padStart(2, '0');
+    return `${dia}/${mes}/${anio} ${horas}:${minutos}:${segundos}`;
+  };
 
   const onChange = (event, selectedDate) => {
     const currentDate = selectedDate || date;
@@ -22,28 +32,38 @@ const BirthdayScreenRegister = ({route,navigation}) => {
     setDate(currentDate);
   };
 
-  const showMode = currentMode => {
-    setShow(true);
-    setMode(currentMode);
-  };
-
   const showDatepicker = () => {
-    showMode('date');
+    setShow(true);
+    setMode('date');
   };
 
-  const showTimepicker = () => {
-    showMode('time');
+  const isAdult = (birthDate) => {
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      return age > 18;
+    }
+    return age >= 18;
   };
 
+  const saveCredentials = () => {
+    if (!isAdult(date)) {
+      Alert.alert('Error', 'You must be at least 18 years old to register.');
+      return;
+    }
 
-  const saveCredentials = () =>{
     try {
-      //const auth = getAuth();
+      const datenow = getdate();
       createUserWithEmailAndPassword(auth, user, pass)
         .then(async () => {
           try {
             const docRef = await addDoc(collection(db, 'users'), {
               username: user,
+              name: '',
+              lastname: '',
+              dateregister: datenow,
+              img_profile: 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1',
               mail: user,
               pass: pass,
               birthday: date
@@ -53,29 +73,26 @@ const BirthdayScreenRegister = ({route,navigation}) => {
           }
         })
         .catch(err => {
-          Alert.alert(err);
+          Alert.alert(err.message);
         });
     } catch (error) {
       console.error('Error al iniciar sesión:', error);
     }
-  }
+  };
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() =>navigation.goBack()}>
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
         <Icon name="arrow-left" size={30} color="#4b4b4b" />
       </TouchableOpacity>
       <View style={styles.logoContainer}>
         <Image style={styles.logoIcon} source={logo1} />
       </View>
       <View style={styles.containerForms}>
-        <Text style={styles.label}>Your birthday?:</Text>
-        <View>
-          <Button onPress={showDatepicker} title="Show date picker!" />
-        </View>
-        <View>
-          <Button onPress={showTimepicker} title="Show time picker!" />
-        </View>
+        <Text style={styles.label}>Your birthday:</Text>
+        <TouchableOpacity style={styles.datePickerButton} onPress={showDatepicker}>
+          <Text style={styles.datePickerText}>{date.toDateString()}</Text>
+        </TouchableOpacity>
         {show && (
           <DateTimePicker
             testID="dateTimePicker"
@@ -130,13 +147,19 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     fontSize: 16,
   },
-  input: {
+  datePickerButton: {
     height: 50,
-    marginBottom: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
     borderWidth: 1,
-    padding: 10,
     borderRadius: 10,
     borderColor: '#adadad',
+    backgroundColor: '#fff',
+    marginBottom: 12,
+  },
+  datePickerText: {
+    fontSize: 16,
+    color: '#000',
   },
   buttonLogin: {
     backgroundColor: '#4b4b4b',
