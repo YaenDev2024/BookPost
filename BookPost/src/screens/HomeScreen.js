@@ -8,8 +8,9 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ScrollView,
+  TextInput,
 } from 'react-native';
-import { ScrollView, TextInput } from 'react-native-gesture-handler';
 import img from '../../assets/2.png';
 import { auth, db } from '../../config';
 import { collection, getDocs, onSnapshot, query, where } from '@firebase/firestore';
@@ -19,15 +20,13 @@ import CardWithoutPubs from '../components/CardWithoutPubs';
 import CardWithPubs from '../components/CardWithPubs';
 import MaterialC from 'react-native-vector-icons/MaterialCommunityIcons';
 
-
 const HomeScreen = () => {
+
   const [dataPubs, setPubs] = useState([]);
   const [usermail, setMail] = useState('');
   const [imgp, setImgP] = useState('');
-  const [load, setLoad] = useState(true)
+  const [load, setLoad] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-
-
   const [existPub, setExistPub] = useState(false);
 
   const handleLogout = async () => {
@@ -44,25 +43,21 @@ const HomeScreen = () => {
     const fetchData = async () => {
       try {
         const q = query(collection(db, 'publications'));
-        const unsuscribe = onSnapshot(q, (querySnapshot) => {
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
           const updatedProducts = [];
           querySnapshot.forEach((doc) => {
             updatedProducts.push({ id: doc.id, ...doc.data() });
           });
           setPubs(updatedProducts);
+          setExistPub(updatedProducts.length > 0);
         });
-        return unsuscribe;
+        return unsubscribe;
       } catch (error) {
         console.error('Error al obtener los datos:', error);
       }
     };
 
     fetchData();
-
-    if (dataPubs.length > 1) {
-      setExistPub
-    }
-    console.log(dataPubs)
   }, [refreshing]);
 
   useEffect(() => {
@@ -73,11 +68,11 @@ const HomeScreen = () => {
 
   useEffect(() => {
     if (usermail) {
-      setdataofuser();
+      setDataOfUser();
     }
   }, [usermail]);
 
-  const setdataofuser = async () => {
+  const setDataOfUser = async () => {
     const q = query(
       collection(db, 'users'),
       where('mail', '==', usermail)
@@ -98,89 +93,127 @@ const HomeScreen = () => {
     }
   };
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoad(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
-  setTimeout(() => {
-    setLoad(false)
-  }, 1500);
   const onRefresh = () => {
     setRefreshing(true);
     setTimeout(() => {
       setRefreshing(false);
-    }, 2000); // Simula el tiempo de carga
+    }, 2000); 
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.maincontainer} refreshControl={
-      <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-    }>
+    <View style={styles.mainContainer}>
       <StatusBar
         translucent
-        backgroundColor={'transparent'}
+        backgroundColor={'#353535'}
         barStyle="light-content"
       />
-      {load ? <LoadingScreen /> : <>
-        <View style={styles.headerContainer}>
-          <Text style={styles.titleLeft}>BookPost</Text>
-          <TouchableOpacity onPress={handleLogout}>
-            <Image source={{ uri: imgp }} style={styles.imgPerfil} />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.cardThink}>
-          <Image source={{ uri: imgp }} style={styles.imgPerfil} />
-          <TextInput style={styles.inputThink} placeholder="¿Qué piensas?" placeholderTextColor="gray" />
-          <TouchableOpacity style={styles.button}><MaterialC name="file-image-plus-outline" size={35} color={'black'} />
-          </TouchableOpacity>
-        </View>
+      {load ? (
+        <LoadingScreen />
+      ) : (
+        <>
+          <View style={styles.headerContainer}>
+            <Text style={styles.titleLeft}>BookPost</Text>
+            <TouchableOpacity onPress={handleLogout}>
+              <Image source={{ uri: imgp }} style={styles.imgPerfil} />
+            </TouchableOpacity>
+          </View>
 
-        {existPub ?
-          <CardWithoutPubs /> : <>
-            {dataPubs.map((item, index) => (
-              <CardWithPubs key={index} likes={item.likes} commentsqty={item.commnets_qty} data={item.data} datecreated={item.datecreate} img={item.img_perfil} name={item.name} />
-            ))}
-          </>
-        }
-      </>
-      }
-    </ScrollView>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollViewContent}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+          >
+            <View style={styles.cardThink}>
+              <Image source={{ uri: imgp }} style={styles.imgPerfil} />
+              <TextInput
+                style={styles.inputThink}
+                placeholder="¿Qué piensas?"
+                placeholderTextColor="white"
+              />
+              <TouchableOpacity style={styles.button}>
+                <MaterialC name="file-image-plus-outline" size={35} color={'#1f9c0d'} />
+              </TouchableOpacity>
+            </View>
+
+            {!existPub ? (
+              <CardWithoutPubs style={styles.card} />
+            ) : (
+              dataPubs.map((item, index) => (
+                <CardWithPubs
+                  key={index}
+                  likes={item.likes}
+                  commentsqty={item.commnets_qty}
+                  data={item.data}
+                  datecreated={item.datecreate}
+                  img={item.img_perfil}
+                  name={item.name}
+                  id_pub={item.id}
+                  style={styles.card}
+                />
+              ))
+            )}
+          </ScrollView>
+        </>
+      )}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  maincontainer: {
-    backgroundColor: 'black',
+  mainContainer: {
+    backgroundColor: '#272727',
     alignItems: 'center',
-    flexGrow: 1,
-    paddingBottom: 20,
+    flex: 1,
+    width: '100%', // Añadido para ocupar todo el ancho
+  },
+  scrollView: {
+    width: '100%',
+  },
+  scrollViewContent: {
+    alignItems: 'center',
   },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
     width: '100%',
-    paddingHorizontal: 30,
-    marginTop: 50,
+    paddingHorizontal: 15,
+    marginTop: 0,
+    backgroundColor:"#353535",
+    padding:10,
+    marginTop: 40,
+    borderBottomColor:'gray',
+    borderBottomWidth: 1,
   },
   titleLeft: {
     color: 'white',
-    fontSize: 18,
-    fontWeight: '500',
+    fontSize: 20,
+    fontWeight: 'bold',
     position: 'relative',
-    top: -10
-  },
-  titleRight: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '500',
+    top: -10,
   },
   cardThink: {
-    backgroundColor: 'white',
+    backgroundColor: '#353535',
     height: 56,
-    borderRadius: 10,
-    margin: 10,
-    width: '90%',
+    marginBottom: 10,
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
   },
   imgPerfil: {
     height: 40,
@@ -192,7 +225,7 @@ const styles = StyleSheet.create({
   inputThink: {
     flex: 1,
     marginHorizontal: 10,
-    borderColor: 'gray',
+    borderColor: 'white',
     borderWidth: 1,
     borderRadius: 20,
     paddingLeft: 10,
@@ -202,10 +235,9 @@ const styles = StyleSheet.create({
   button: {
     padding: 5,
   },
-  buttonImage: {
-    height: 40,
-    width: 40,
-  }
+  card: {
+    width: '100%', // Añadido para ocupar todo el ancho
+  },
 });
 
 export default HomeScreen;
