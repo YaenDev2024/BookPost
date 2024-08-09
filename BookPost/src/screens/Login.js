@@ -120,6 +120,7 @@ const Login = ({ navigation }) => {
               style={emptyPass ? styles.inputFail : styles.input}
               onChangeText={handlePassword}
               placeholder="Enter your password"
+              placeholderTextColor={'gray'}
               secureTextEntry
               value={password}
             />
@@ -198,6 +199,7 @@ const styles = StyleSheet.create({
     borderColor: '#adadad',
     marginLeft: 20,
     marginRight: 35,
+    color:'gray'
   },
   inputFail: {
     height: 50,

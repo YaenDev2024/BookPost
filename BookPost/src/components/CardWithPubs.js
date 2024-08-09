@@ -166,7 +166,7 @@ const CardWithPubs = ({img, data, name, id_pub}) => {
             <MaterialC name="cards-heart" size={25} color={'red'} />
           </TouchableOpacity>
         )}
-        <TouchableOpacity style={{marginRight: 10}}>
+        <TouchableOpacity style={{marginRight: 10}}  onPress={handleShowComments}>
           <MaterialC name="message-outline" size={25} color={'#e3e3e3'} />
         </TouchableOpacity>
         <TouchableOpacity style={{marginRight: 10}}>
