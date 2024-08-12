@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -10,24 +10,56 @@ import {
   View,
   ScrollView,
   TextInput,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import img from '../../assets/2.png';
-import { auth, db } from '../../config';
-import { collection, getDocs, onSnapshot, query, where } from '@firebase/firestore';
-import { useAuth } from '../hooks/Autentication';
+import {auth, db} from '../../config';
+import {
+  collection,
+  getDocs,
+  onSnapshot,
+  query,
+  where,
+} from '@firebase/firestore';
+import {useAuth} from '../hooks/Autentication';
 import LoadingScreen from '../hooks/LoadingScreen';
 import CardWithoutPubs from '../components/CardWithoutPubs';
 import CardWithPubs from '../components/CardWithPubs';
 import MaterialC from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const HomeScreen = () => {
+import {
+  Directions,
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+} from 'react-native-gesture-handler';
+import Animated, {
+  withTiming,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
+import CommentsComp from '../components/comments/CommentsComp';
+import Comments from '../components/comments/Comments';
+import VerticalPanResponder from '../components/comments/CommentModal';
 
+const HomeScreen = () => {
   const [dataPubs, setPubs] = useState([]);
   const [usermail, setMail] = useState('');
   const [imgp, setImgP] = useState('');
   const [load, setLoad] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [existPub, setExistPub] = useState(false);
+  const {width, height} = Dimensions.get('screen');
+
+  const [isVisible, setVisible] = useState(false);
+
+  const [dataidpub, setDataidpub] = useState('');
+
+  const getData = text => {
+    setDataidpub(text);
+  };
 
   const handleLogout = async () => {
     try {
@@ -36,17 +68,58 @@ const HomeScreen = () => {
       console.log('Error al cerrar sesión: ', err.message);
     }
   };
+  function clamp(val, min, max) {
+    return Math.min(Math.max(val, min), max);
+  }
+  const {user} = useAuth();
 
-  const { user } = useAuth();
+  const translationY = useSharedValue(0);
+  const prevTranslationY = useSharedValue(0);
+
+  const animatedStyles = useAnimatedStyle(() => ({
+    transform: [{translateY: translationY.value}],
+  }));
+
+  const pan = Gesture.Pan()
+    .minDistance(1)
+    .onStart(() => {
+      prevTranslationY.value = translationY.value;
+    })
+    .onUpdate(event => {
+      const maxTranslateY = height / 2 - 50;
+
+      const newTranslationY = clamp(
+        prevTranslationY.value + event.translationY,
+        -maxTranslateY,
+        maxTranslateY,
+      );
+
+      translationY.value = newTranslationY;
+
+      if (newTranslationY > 100) {
+        resetModalPosition();
+        setVisible(false);
+      }
+    }); // Añade la referencia del ScrollView
+
+  // Function to reset the modal position
+  const resetModalPosition = () => {
+    translationY.value = withSpring(0); // Reset to initial position with spring animation
+  };
+
+  // Close modal and reset position
+  const closeModal = () => {
+    setVisible(false); // Close the modal
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const q = query(collection(db, 'publications'));
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const unsubscribe = onSnapshot(q, querySnapshot => {
           const updatedProducts = [];
-          querySnapshot.forEach((doc) => {
-            updatedProducts.push({ id: doc.id, ...doc.data() });
+          querySnapshot.forEach(doc => {
+            updatedProducts.push({id: doc.id, ...doc.data()});
           });
           setPubs(updatedProducts);
           setExistPub(updatedProducts.length > 0);
@@ -73,10 +146,7 @@ const HomeScreen = () => {
   }, [usermail]);
 
   const setDataOfUser = async () => {
-    const q = query(
-      collection(db, 'users'),
-      where('mail', '==', usermail)
-    );
+    const q = query(collection(db, 'users'), where('mail', '==', usermail));
 
     try {
       const querySnapshot = await getDocs(q);
@@ -84,7 +154,7 @@ const HomeScreen = () => {
       if (querySnapshot.empty) {
         console.log('No se encontraron datos para el usuario.');
       } else {
-        querySnapshot.forEach((doc) => {
+        querySnapshot.forEach(doc => {
           setImgP(doc.data().img_profile);
         });
       }
@@ -104,7 +174,7 @@ const HomeScreen = () => {
     setRefreshing(true);
     setTimeout(() => {
       setRefreshing(false);
-    }, 2000); 
+    }, 2000);
   };
 
   return (
@@ -121,26 +191,26 @@ const HomeScreen = () => {
           <View style={styles.headerContainer}>
             <Text style={styles.titleLeft}>BookPost</Text>
             <TouchableOpacity onPress={handleLogout}>
-              <Image source={{ uri: imgp }} style={styles.imgPerfil} />
+              <Image source={{uri: imgp}} style={styles.imgPerfil} />
             </TouchableOpacity>
           </View>
 
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={styles.scrollViewContent}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-            }
-          >
+            contentContainerStyle={styles.scrollViewContent}>
             <View style={styles.cardThink}>
-              <Image source={{ uri: imgp }} style={styles.imgPerfil} />
+              <Image source={{uri: imgp}} style={styles.imgPerfil} />
               <TextInput
                 style={styles.inputThink}
                 placeholder="¿Qué piensas?"
                 placeholderTextColor="white"
               />
               <TouchableOpacity style={styles.button}>
-                <MaterialC name="file-image-plus-outline" size={35} color={'#1f9c0d'} />
+                <MaterialC
+                  name="file-image-plus-outline"
+                  size={35}
+                  color={'#1f9c0d'}
+                />
               </TouchableOpacity>
             </View>
 
@@ -158,12 +228,20 @@ const HomeScreen = () => {
                   name={item.name}
                   id_pub={item.id}
                   style={styles.card}
+                  setVisible={setVisible}
+                  sendid={getData}
                 />
               ))
             )}
           </ScrollView>
+          {isVisible ? (
+        <VerticalPanResponder idpub={dataidpub} onClose={closeModal} />
+      ) : (
+        ''
+      )}
         </>
       )}
+    
     </View>
   );
 };
@@ -173,7 +251,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#272727',
     alignItems: 'center',
     flex: 1,
-    width: '100%', // Añadido para ocupar todo el ancho
+    width: '100%',
   },
   scrollView: {
     width: '100%',
@@ -188,10 +266,10 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: 15,
     marginTop: 0,
-    backgroundColor:"#353535",
-    padding:10,
+    backgroundColor: '#353535',
+    padding: 10,
     marginTop: 35,
-    borderBottomColor:'gray',
+    borderBottomColor: 'gray',
     borderBottomWidth: 1,
   },
   titleLeft: {
@@ -210,7 +288,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.3,
     shadowRadius: 3,
     elevation: 5,
@@ -237,6 +315,11 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '100%', // Añadido para ocupar todo el ancho
+  },
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

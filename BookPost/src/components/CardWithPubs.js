@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Dimensions, Image, Modal, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import MaterialC from 'react-native-vector-icons/MaterialCommunityIcons';
 import {
   collection,
@@ -14,13 +14,22 @@ import {
 import {db} from '../../config';
 import CommentsComp from './comments/CommentsComp';
 import {useAuth} from '../hooks/Autentication';
+import Animated, {useAnimatedStyle, useSharedValue, withTiming} from 'react-native-reanimated';
+import {
+  Directions,
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+} from 'react-native-gesture-handler';
 
-const CardWithPubs = ({img, data, name, id_pub}) => {
+const CardWithPubs = ({img, data, name, id_pub, setVisible,sendid}) => {
   const [comments, setComments] = useState([]);
   const [show, setShow] = useState(false);
   const [isLiked, setLiked] = useState(false);
   const {user} = useAuth();
   const [userid, setUserID] = useState('');
+
+  const [viewModal, setModalView] = useState(true);
 
   useEffect(() => {
     const commentsQuery = query(
@@ -87,7 +96,9 @@ const CardWithPubs = ({img, data, name, id_pub}) => {
   }, [id_pub, userid]);
 
   const handleShowComments = () => {
-    setShow(!show);
+   // setShow(!show);
+    setVisible(prev => !prev)
+    sendid(id_pub)
   };
 
   const saveLike = async () => {
@@ -127,7 +138,6 @@ const CardWithPubs = ({img, data, name, id_pub}) => {
           console.error('Error al guardar el like:', error);
         }
       } else {
-       
         const likeDocId = likeSnapshot.docs[0].id;
         try {
           await deleteDoc(doc(db, 'likes_by_users', likeDocId));
@@ -140,6 +150,38 @@ const CardWithPubs = ({img, data, name, id_pub}) => {
       console.error('No se encontraron datos del usuario.');
     }
   };
+
+  const handleSharePost = () => {};
+
+  const translateY = useSharedValue(0);
+  const startTranslateY = useSharedValue(0);
+
+  function clamp(val, min, max) {
+    return Math.min(Math.max(val, min), max);
+  }
+
+  const fling = Gesture.Fling()
+    .direction(Directions.UP | Directions.DOWN)
+    .onBegin(event => {
+      startTranslateY.value = event.y;
+    })
+    .onStart(event => {
+      translateY.value = withTiming(
+        clamp(
+          translateY.value + event.y - startTranslateY.value,
+          width / -2 + 50,
+          width / 2 - 50,
+        ),
+        {duration: 200},
+      );
+    })
+    .runOnJS(true);
+
+    const boxanimatedstyles = useAnimatedStyle(() =>({
+      transform: [{translateY: translateY.value}],
+    }))
+
+    const { width } = Dimensions.get('screen');
 
   return (
     <View style={styles.card}>
@@ -166,19 +208,21 @@ const CardWithPubs = ({img, data, name, id_pub}) => {
             <MaterialC name="cards-heart" size={25} color={'red'} />
           </TouchableOpacity>
         )}
-        <TouchableOpacity style={{marginRight: 10}}  onPress={handleShowComments}>
+        <TouchableOpacity
+          style={{marginRight: 10}}
+          onPress={handleShowComments}>
           <MaterialC name="message-outline" size={25} color={'#e3e3e3'} />
         </TouchableOpacity>
-        <TouchableOpacity style={{marginRight: 10}}>
+        <TouchableOpacity style={{marginRight: 10}} onPress={handleSharePost}>
           <MaterialC name="share-variant-outline" size={25} color={'#e3e3e3'} />
         </TouchableOpacity>
       </View>
-      <CommentsComp
+      {/* <CommentsComp
         visible={show}
         onClose={handleShowComments}
         datacomments={comments}
         idpub={id_pub}
-      />
+      /> */}
     </View>
   );
 };

@@ -1,17 +1,17 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Image,
-  Modal,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
-  TouchableOpacity,
+  TouchableOpacity,PanResponder,Animated,
+  Alert
 } from 'react-native';
 import CommentUser from './CommentUser';
 import MaterialC from 'react-native-vector-icons/MaterialCommunityIcons';
-import {useAuth} from '../../hooks/Autentication';
+import { useAuth } from '../../hooks/Autentication';
 import {
   addDoc,
   collection,
@@ -23,17 +23,21 @@ import {
   doc,
   getDoc,
 } from '@firebase/firestore';
-import {db} from '../../../config';
+import { db } from '../../../config';
 
-const CommentsComp = ({visible, onClose, idpub}) => {
-  const {user} = useAuth();
+const Comments = ({ boxAnimatedStyles, onClose, idpub }) => {
+  const { user } = useAuth();
   const [comment, setComment] = useState('');
   const [datacomments, setdatacommentsComment] = useState([]);
   const [morethanone, setMorethan] = useState(true);
   const [isOneLike, setOneLike] = useState(false);
   const [oneLike, setOnelikeName] = useState('');
   const [allNames, setAllNames] = useState([]);
+  const pan = useRef(new Animated.Value(0)).current;
+  const [isVisible, setIsVisible] = useState(true); 
 
+    console.log(datacomments)
+    
   useEffect(() => {
     const commentsQuery = query(
       collection(db, 'comments'),
@@ -53,10 +57,8 @@ const CommentsComp = ({visible, onClose, idpub}) => {
         console.error('Error al obtener los comentarios:', error);
       },
     );
-
     return () => unsubscribe();
   }, [idpub]);
-
 
   useEffect(() => {
     const likeQuery = query(
@@ -117,7 +119,7 @@ const CommentsComp = ({visible, onClose, idpub}) => {
       }));
 
       if (commentsData.length > 0) {
-        const {id, img_profile, username} = commentsData[0];
+        const { id, img_profile, username } = commentsData[0];
 
         await addDoc(collection(db, 'comments'), {
           data: comment,
@@ -128,26 +130,41 @@ const CommentsComp = ({visible, onClose, idpub}) => {
           username: username,
         });
 
-        // Opcional: limpiar el campo de comentario después de guardarlo
         setComment('');
       } else {
         console.error('No user data found.');
       }
     } catch (error) {
-      console.error('Error al obtener los comentarios:', error);
+      console.error('Error al guardar el comentario:', error);
     }
   };
-
-  const getLikesCount = () => {};
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        return Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
+      },
+      onPanResponderMove: (evt, gestureState) => {
+        // Solo permitimos el movimiento en el eje Y
+        pan.setValue(gestureState.dy);
+      },
+      onPanResponderRelease: (evt, gestureState) => {
+        if (gestureState.dy > 100) {
+          setIsVisible(false); // Ocultamos la vista
+        } else {
+          Animated.spring(pan, { toValue: 0, useNativeDriver: true }).start(); // Regresamos a la posición original
+        }
+      },
+    })
+  ).current;
   return (
-   
+    <Animated.View style={[styles.box, boxAnimatedStyles]}>
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <MaterialC name="close" size={25} color={'white'} />
           </TouchableOpacity>
-          {/* This is header of the comments section */}
-          <View style={styles.headerlikes}>
+          <View style={styles.headerlikes}  {...panResponder.panHandlers}>
             {isOneLike ? (
               <>
                 <MaterialC name="cards-heart" size={25} color={'red'} />
@@ -164,8 +181,7 @@ const CommentsComp = ({visible, onClose, idpub}) => {
               <Text style={styles.headerText}>No hay reacciones</Text>
             )}
           </View>
-          <ScrollView style={{width: '100%'}}>
-            {/* Comment by user */}
+          <ScrollView style={styles.scrollContainer}>
             {datacomments.map((item, index) => (
               <CommentUser
                 key={index}
@@ -173,6 +189,7 @@ const CommentsComp = ({visible, onClose, idpub}) => {
                 user={item.username}
                 img={item.img_perfil}
                 date={item.date}
+                iddoc={item.date}
               />
             ))}
           </ScrollView>
@@ -184,9 +201,9 @@ const CommentsComp = ({visible, onClose, idpub}) => {
               value={comment}
               onChangeText={text => setComment(text)}
             />
-            <TouchableOpacity onPress={() => saveComment()}>
+            <TouchableOpacity onPress={saveComment}>
               <MaterialC
-                style={{padding: 10, marginTop: 10}}
+                style={{ padding: 10, marginTop: 10 }}
                 name="send"
                 size={35}
                 color={'white'}
@@ -195,16 +212,20 @@ const CommentsComp = ({visible, onClose, idpub}) => {
           </View>
         </View>
       </View>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
+  box: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 20,
+  },
   centeredView: {
     flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'center',
-    marginBottom: 20,
-    position:'absolute'
   },
   modalView: {
     width: '100%',
@@ -212,24 +233,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#353535',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    shadowColor: '#000',
     paddingTop: 10,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
     elevation: 5,
   },
   closeButton: {
     alignSelf: 'flex-end',
+    marginRight: 15,
   },
   headerText: {
     fontSize: 14,
     fontWeight: 'bold',
     color: 'white',
     marginLeft: 5,
+  },
+  headerlikes: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  scrollContainer: {
+    flex: 1,
+    width: '100%',
   },
   input: {
     borderWidth: 1,
@@ -238,16 +261,14 @@ const styles = StyleSheet.create({
     padding: 10,
     marginTop: 10,
     width: '90%',
-  },
-  headerlikes: {
-    flexDirection: 'row',
-    marginTop: -25,
-    marginBottom: 20,
+    color: 'white',
   },
   inputs: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingBottom: 20,
   },
 });
 
-export default CommentsComp;
+export default Comments;
