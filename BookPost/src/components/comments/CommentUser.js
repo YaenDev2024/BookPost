@@ -1,20 +1,29 @@
-import React, {useEffect, useState} from 'react';
-import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import AnsweredComment from './AnsweredComment';
-import {doc, onSnapshot} from '@firebase/firestore';
-import {db} from '../../../config';
+import { doc, onSnapshot } from '@firebase/firestore';
+import { db } from '../../../config'; 
+import CommentSkeleton from '../SkeletonLoader';
 
-const CommentUser = ({user, data, img, date, iddoc}) => {
+const CommentUser = ({ user, data, img, date, iddoc, sendIdcomment }) => {
   const [haveAnswerCommnets, sethaveAnsweredComments] = useState(false);
   const [dataIdComment, setDataIdComment] = useState([]);
+  const [loading, setLoading] = useState(true); 
 
   const checkCommnets = async () => {
     const unsub = onSnapshot(doc(db, 'comments', iddoc), doc => {
-      console.log('Current data: ', doc.data().comments_answered_id);
-      if (doc.data().comments_answered_id !== undefined) {
-        sethaveAnsweredComments(true);
-        setDataIdComment(doc.data());
+     
+      const commentsAnsweredId = doc.data().comments_answered_id;
+
+      if (commentsAnsweredId && Array.isArray(commentsAnsweredId)) {
+        sethaveAnsweredComments(commentsAnsweredId.length > 0);
+        setDataIdComment(commentsAnsweredId); 
+      } else {
+        sethaveAnsweredComments(false);
+        setDataIdComment([]); 
       }
+
+      setLoading(false); 
     });
   };
 
@@ -25,7 +34,7 @@ const CommentUser = ({user, data, img, date, iddoc}) => {
 
   function timeAgo(firebaseTimestamp) {
     if (!firebaseTimestamp || !firebaseTimestamp.seconds) {
-      return 'Fecha no válida'; // manejo de errores básico
+      return 'Fecha no válida'; 
     }
 
     const date = new Date(
@@ -56,26 +65,39 @@ const CommentUser = ({user, data, img, date, iddoc}) => {
     }
   }
 
+  const idcomm =(text,user) =>{
+    console.log(text,user)
+  }
   return (
     <>
-      <View style={styles.container}>
-        <Image style={styles.imgperfil} source={{uri: img}} />
-        <View style={styles.comment}>
-          <Text style={styles.text}>{user}</Text>
-          <Text style={styles.name}>{data}</Text>
-        </View>
-      </View>
-      <View style={styles.date}>
-        <Text style={styles.datetext}>{timeAgo(date)}</Text>
-        <TouchableOpacity>
-          <Text style={styles.text}>Responder</Text>
-        </TouchableOpacity>
-      </View>
-      {haveAnswerCommnets ? (
-        <View style={styles.containeranswered}>
-          <AnsweredComment date={date} iddoc={dataIdComment} />
-        </View>
-      ) : null}
+      {loading ? ( 
+        <CommentSkeleton />
+      ) : (
+        <>
+          <View style={styles.container}>
+            <Image style={styles.imgperfil} source={{ uri: img }} />
+            <View style={styles.comment}>
+              <Text style={styles.text}>{user}</Text>
+              <Text style={styles.name}>{data}</Text>
+            </View>
+          </View>
+          <View style={styles.date}>
+            <Text style={styles.datetext}>{timeAgo(date)}</Text>
+            <TouchableOpacity onPress={() => sendIdcomment(iddoc, user)}>
+              <Text style={styles.text}>Responder</Text>
+            </TouchableOpacity>
+          </View>
+          {haveAnswerCommnets &&
+            Array.isArray(dataIdComment) &&
+            dataIdComment
+              .filter(item => item !== undefined)
+              .map((item, index) => (
+                <View key={index} style={styles.containeranswered}>
+                  <AnsweredComment date={date} iddoc={item} idcomm={sendIdcomment} idcomment ={iddoc}/>
+                </View>
+              ))}
+        </>
+      )}
     </>
   );
 };
@@ -108,6 +130,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     position: 'static',
     left: 63,
+    marginBottom: 10,
   },
   datetext: {
     marginRight: 10,

@@ -14,6 +14,7 @@ import {
 import {useAuth} from '../../hooks/Autentication';
 import {
   addDoc,
+  arrayUnion,
   collection,
   doc,
   getDoc,
@@ -21,6 +22,7 @@ import {
   onSnapshot,
   query,
   serverTimestamp,
+  updateDoc,
   where,
 } from '@firebase/firestore';
 import {db} from '../../../config';
@@ -37,7 +39,10 @@ const VerticalPanResponder = ({idpub, onClose}) => {
   const [isOneLike, setOneLike] = useState(false);
   const [oneLike, setOnelikeName] = useState('');
   const [allNames, setAllNames] = useState([]);
-
+  const [resUser, setResUser] = useState('');
+  const [res, setRes] = useState(false);
+  const [idComment,setIdcomment] = useState('')
+  const [idanswered,setIdAnswered] = useState('')
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -86,9 +91,6 @@ const VerticalPanResponder = ({idpub, onClose}) => {
     );
     return () => unsubscribe();
   }, [idpub]);
-
-  
-
 
   // Fetch likes
   useEffect(() => {
@@ -150,18 +152,43 @@ const VerticalPanResponder = ({idpub, onClose}) => {
       }));
 
       if (commentsData.length > 0) {
-        const {id, img_profile, username} = commentsData[0];
+        if (res === true) {
+          const {id, img_profile, username} = commentsData[0];
 
-        await addDoc(collection(db, 'comments'), {
-          data: comment,
-          date: serverTimestamp(),
-          id_pub: idpub,
-          id_user: id,
-          img_perfil: img_profile,
-          username: username,
-        });
+          const docRef = await addDoc(collection(db, 'answer_comments'), {
+            data: resUser + ' ' + comment,
+            date: serverTimestamp(),
+            id_user: id,
+          });
 
-        setComment('');
+          const newId = docRef.id;
+
+          const setNewCommentToUSER = doc(db, 'comments', idComment);
+          await updateDoc(setNewCommentToUSER, {
+            comments_answered_id: arrayUnion(newId),
+          });
+          setComment('');
+          setRes(false);
+          setResUser('');
+          handleBlur()
+        } else {
+          const {id, img_profile, username} = commentsData[0];
+
+          await addDoc(collection(db, 'comments'), {
+            comments_answered_id: [],
+            data: comment,
+            date: serverTimestamp(),
+            id_pub: idpub,
+            id_user: id,
+            img_perfil: img_profile,
+            username: username,
+          });
+
+          setComment('');
+          setRes(false);
+          setResUser('');
+          handleBlur()
+        }
       } else {
         console.error('No user data found.');
       }
@@ -170,7 +197,32 @@ const VerticalPanResponder = ({idpub, onClose}) => {
     }
   };
 
-  // Renderizar
+  const setIdCommentSon = (text, user) => {
+    handleFocus();
+    setRes(true);
+    setResUser(user + ' ');
+    setIdcomment(text)
+  };
+
+  const cancelComment = () => {
+    setRes(false);
+    setResUser('');
+    setComment('')
+    handleBlur()
+  };
+
+  const textInputRef = useRef(null);
+
+  const handleFocus = () => {
+    if (textInputRef.current) {
+      textInputRef.current.focus();
+    }
+  };
+  const handleBlur = () => {
+    if (textInputRef.current) {
+      textInputRef.current.blur(); // Quitar foco
+    }
+  };
   return (
     <Modal
       transparent={true}
@@ -218,16 +270,33 @@ const VerticalPanResponder = ({idpub, onClose}) => {
                       img={item.img_perfil}
                       date={item.date}
                       iddoc={item.id}
+                      sendIdcomment={setIdCommentSon}
                     />
                   ))}
                 </ScrollView>
+                {res ? (
+                  <Text style={styles.res}>
+                    Respondiendo:{' '}
+                    <Text style={styles.resUser}>{resUser.trim()}</Text>{' '}
+                    <Text onPress={cancelComment}>- Cancelar</Text>
+                  </Text>
+                ) : null}
+
                 <View style={styles.inputs}>
                   <TextInput
+                    ref={textInputRef}
                     style={styles.input}
                     placeholder="Escribe un comentario..."
                     placeholderTextColor={'gray'}
-                    value={comment}
-                    onChangeText={text => setComment(text)}
+                    value={res ? resUser + comment : comment}
+                    onChangeText={text => {
+                      if (res && text.startsWith(resUser)) {
+                        setComment(text.slice(resUser.length));
+                        setIdAnswered(resUser)
+                      } else {
+                        setComment(text);
+                      }
+                    }}
                   />
                   <TouchableOpacity onPress={saveComment}>
                     <MaterialC
@@ -333,6 +402,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 10,
     paddingBottom: 5,
+  },
+  res: {
+    textAlign: 'auto',
+    justifyContent: 'center',
+    marginTop: 10,
+    marginLeft: 10,
+  },
+  resUser: {
+    fontWeight: 'bold',
+    color: 'white',
   },
 });
 
