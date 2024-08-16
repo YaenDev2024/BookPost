@@ -235,13 +235,12 @@ const HomeScreen = () => {
             )}
           </ScrollView>
           {isVisible ? (
-        <VerticalPanResponder idpub={dataidpub} onClose={closeModal} />
-      ) : (
-        ''
-      )}
+            <VerticalPanResponder idpub={dataidpub} onClose={closeModal} />
+          ) : (
+            ''
+          )}
         </>
       )}
-    
     </View>
   );
 };

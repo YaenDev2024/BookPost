@@ -9,6 +9,7 @@ const CommentUser = ({ user, data, img, date, iddoc, sendIdcomment }) => {
   const [haveAnswerCommnets, sethaveAnsweredComments] = useState(false);
   const [dataIdComment, setDataIdComment] = useState([]);
   const [loading, setLoading] = useState(true); 
+  console.log('Fecha que se pasa a timeAgo:', date);
 
   const checkCommnets = async () => {
     const unsub = onSnapshot(doc(db, 'comments', iddoc), doc => {
@@ -65,9 +66,7 @@ const CommentUser = ({ user, data, img, date, iddoc, sendIdcomment }) => {
     }
   }
 
-  const idcomm =(text,user) =>{
-    console.log(text,user)
-  }
+  
   return (
     <>
       {loading ? ( 
@@ -82,7 +81,7 @@ const CommentUser = ({ user, data, img, date, iddoc, sendIdcomment }) => {
             </View>
           </View>
           <View style={styles.date}>
-            <Text style={styles.datetext}>{timeAgo(date)}</Text>
+          <Text style={styles.datetext}>{date ? timeAgo(date) : 'Fecha no válida'}</Text>
             <TouchableOpacity onPress={() => sendIdcomment(iddoc, user)}>
               <Text style={styles.text}>Responder</Text>
             </TouchableOpacity>

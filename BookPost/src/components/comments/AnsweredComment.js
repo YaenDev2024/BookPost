@@ -22,15 +22,10 @@ const AnsweredComment = ({date, iddoc, idcomm, idcomment}) => {
   const getCommnent = async () => {
     const dataComments = [];
 
-    // Verifica si es un array
     if (Array.isArray(iddoc)) {
       dataComments.push(...iddoc);
-      console.log('es?', dataComments)
     } else if (iddoc) {
-      // Si no es un array, pero tiene un valor
       dataComments.push(iddoc);
-      console.log('es?', idcomment)
-
     }
 
     dataComments.forEach(element => {
@@ -78,7 +73,7 @@ const AnsweredComment = ({date, iddoc, idcomm, idcomment}) => {
 
   function timeAgo(firebaseTimestamp) {
     if (!firebaseTimestamp || !firebaseTimestamp.seconds) {
-      return 'Fecha no válida'; 
+      return 'Fecha no válida';
     }
 
     const date = new Date(
@@ -149,7 +144,7 @@ const AnsweredComment = ({date, iddoc, idcomm, idcomment}) => {
           <Text style={styles.text}>{user.username}</Text>
           <Text style={styles.name}>
             {existUser ? (
-              <View style={{flexDirection:'row'}}>
+              <View style={{flexDirection: 'row'}}>
                 <TouchableOpacity>
                   <Text style={{color: '#58f4fe'}}>{username + ''}</Text>
                 </TouchableOpacity>
@@ -163,7 +158,7 @@ const AnsweredComment = ({date, iddoc, idcomm, idcomment}) => {
       </View>
       <View style={styles.date}>
         <Text style={styles.datetext}>{timeAgo(dates)}</Text>
-        <TouchableOpacity onPress={()=> idcomm(idcomment,user.username)}>
+        <TouchableOpacity onPress={() => idcomm(idcomment, user.username)}>
           <Text style={styles.text}>Responder</Text>
         </TouchableOpacity>
       </View>

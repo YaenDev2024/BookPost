@@ -4,43 +4,37 @@ import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 
 const CommentSkeleton = () => {
   return (
-    <SkeletonPlaceholder>
-      <View style={styles.container}>
-        <View style={styles.avatar} />
-        <View style={styles.textContainer}>
-          <View style={styles.name} />
-          <View style={styles.comment} />
-        </View>
+    <View style={styles.skeletonContainer}>
+      <View style={styles.skeletonAvatar} />
+      <View style={styles.skeletonTextContainer}>
+        <View style={styles.skeletonTextLine} />
+        <View style={[styles.skeletonTextLine, { width: '80%' }]} />
       </View>
-    </SkeletonPlaceholder>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  skeletonContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 10,
+    paddingVertical: 10,
   },
-  avatar: {
+  skeletonAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
+    backgroundColor: '#e0e0e0',
+    marginRight: 10,
   },
-  textContainer: {
-    marginLeft: 10,
+  skeletonTextContainer: {
     flex: 1,
   },
-  name: {
-    width: '50%',
+  skeletonTextLine: {
     height: 10,
+    backgroundColor: '#e0e0e0',
     borderRadius: 5,
-  },
-  comment: {
-    marginTop: 5,
-    width: '80%',
-    height: 10,
-    borderRadius: 5,
+    marginBottom: 5,
   },
 });
 
