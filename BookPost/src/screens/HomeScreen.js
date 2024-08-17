@@ -43,6 +43,8 @@ import Animated, {
 import CommentsComp from '../components/comments/CommentsComp';
 import Comments from '../components/comments/Comments';
 import VerticalPanResponder from '../components/comments/CommentModal';
+import PublicationModal from '../components/publish/PublicationModal';
+import SharePubModal from '../components/publish/SharePubModal';
 
 const HomeScreen = () => {
   const [dataPubs, setPubs] = useState([]);
@@ -56,6 +58,14 @@ const HomeScreen = () => {
   const [isVisible, setVisible] = useState(false);
 
   const [dataidpub, setDataidpub] = useState('');
+
+  const [visibleModalPub, setVisibleModalPub] = useState(false);
+
+  const [username, setUsername] = useState('');
+
+  const [isShareVisible, setShareVisible] = useState(false);
+
+  const [idUser, setIdUser] = useState('');
 
   const getData = text => {
     setDataidpub(text);
@@ -100,16 +110,16 @@ const HomeScreen = () => {
         resetModalPosition();
         setVisible(false);
       }
-    }); // Añade la referencia del ScrollView
+    });
 
-  // Function to reset the modal position
   const resetModalPosition = () => {
-    translationY.value = withSpring(0); // Reset to initial position with spring animation
+    translationY.value = withSpring(0);
   };
 
-  // Close modal and reset position
   const closeModal = () => {
-    setVisible(false); // Close the modal
+    setVisible(false);
+    setVisibleModalPub(false);
+    setShareVisible(false);
   };
 
   useEffect(() => {
@@ -155,7 +165,9 @@ const HomeScreen = () => {
         console.log('No se encontraron datos para el usuario.');
       } else {
         querySnapshot.forEach(doc => {
+          setIdUser(doc.id);
           setImgP(doc.data().img_profile);
+          setUsername(doc.data().username);
         });
       }
     } catch (error) {
@@ -175,6 +187,10 @@ const HomeScreen = () => {
     setTimeout(() => {
       setRefreshing(false);
     }, 2000);
+  };
+
+  const setModalOpen = () => {
+    setVisibleModalPub(true);
   };
 
   return (
@@ -197,13 +213,15 @@ const HomeScreen = () => {
 
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={styles.scrollViewContent}>
+            contentContainerStyle={styles.scrollViewContent}
+            showsVerticalScrollIndicator={false}>
             <View style={styles.cardThink}>
               <Image source={{uri: imgp}} style={styles.imgPerfil} />
               <TextInput
                 style={styles.inputThink}
                 placeholder="¿Qué piensas?"
                 placeholderTextColor="white"
+                onPress={setModalOpen}
               />
               <TouchableOpacity style={styles.button}>
                 <MaterialC
@@ -229,6 +247,7 @@ const HomeScreen = () => {
                   id_pub={item.id}
                   style={styles.card}
                   setVisible={setVisible}
+                  shareVisible={setShareVisible}
                   sendid={getData}
                 />
               ))
@@ -239,6 +258,22 @@ const HomeScreen = () => {
           ) : (
             ''
           )}
+          {visibleModalPub ? (
+            <PublicationModal
+              onClose={closeModal}
+              imgPerfil={imgp}
+              user={username}
+            />
+          ) : null}
+          {isShareVisible ? (
+            <SharePubModal
+              onClose={closeModal}
+              imgPerfil={imgp}
+              user={username}
+              idUser={idUser}
+              idpub={dataidpub}
+            />
+          ) : null}
         </>
       )}
     </View>

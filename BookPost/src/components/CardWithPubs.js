@@ -1,5 +1,12 @@
 import React, {useEffect, useState} from 'react';
-import {Dimensions, Image, Modal, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {
+  Dimensions,
+  Image,
+  TouchableOpacity,
+  Text,
+  View,
+  StyleSheet,
+} from 'react-native';
 import MaterialC from 'react-native-vector-icons/MaterialCommunityIcons';
 import {
   collection,
@@ -12,24 +19,35 @@ import {
   deleteDoc,
 } from '@firebase/firestore';
 import {db} from '../../config';
-import CommentsComp from './comments/CommentsComp';
 import {useAuth} from '../hooks/Autentication';
-import Animated, {useAnimatedStyle, useSharedValue, withTiming} from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import {
   Directions,
   Gesture,
   GestureDetector,
   GestureHandlerRootView,
 } from 'react-native-gesture-handler';
+import CardPubliShared from './CardPubliShared';
 
-const CardWithPubs = ({img, data, name, id_pub, setVisible,sendid}) => {
+const CardWithPubs = ({
+  img,
+  data,
+  name,
+  id_pub,
+  setVisible,
+  sendid,
+  shareVisible,
+}) => {
   const [comments, setComments] = useState([]);
-  const [show, setShow] = useState(false);
   const [isLiked, setLiked] = useState(false);
   const {user} = useAuth();
   const [userid, setUserID] = useState('');
-
-  const [viewModal, setModalView] = useState(true);
+  const {width} = Dimensions.get('screen');
+  const [imgperfil, setImgPerfil] = useState('');
 
   useEffect(() => {
     const commentsQuery = query(
@@ -69,6 +87,7 @@ const CardWithPubs = ({img, data, name, id_pub, setVisible,sendid}) => {
       ...doc.data(),
     }));
     setUserID(userData[0]?.id);
+    setImgPerfil(userData[0]?.img_profile);
   };
 
   useEffect(() => {
@@ -96,9 +115,8 @@ const CardWithPubs = ({img, data, name, id_pub, setVisible,sendid}) => {
   }, [id_pub, userid]);
 
   const handleShowComments = () => {
-   // setShow(!show);
-    setVisible(prev => !prev)
-    sendid(id_pub)
+    setVisible(prev => !prev);
+    sendid(id_pub);
   };
 
   const saveLike = async () => {
@@ -151,49 +169,49 @@ const CardWithPubs = ({img, data, name, id_pub, setVisible,sendid}) => {
     }
   };
 
-  const handleSharePost = () => {};
-
-  const translateY = useSharedValue(0);
-  const startTranslateY = useSharedValue(0);
-
-  function clamp(val, min, max) {
-    return Math.min(Math.max(val, min), max);
-  }
-
-  const fling = Gesture.Fling()
-    .direction(Directions.UP | Directions.DOWN)
-    .onBegin(event => {
-      startTranslateY.value = event.y;
-    })
-    .onStart(event => {
-      translateY.value = withTiming(
-        clamp(
-          translateY.value + event.y - startTranslateY.value,
-          width / -2 + 50,
-          width / 2 - 50,
-        ),
-        {duration: 200},
-      );
-    })
-    .runOnJS(true);
-
-    const boxanimatedstyles = useAnimatedStyle(() =>({
-      transform: [{translateY: translateY.value}],
-    }))
-
-    const { width } = Dimensions.get('screen');
+  const handleSharePost = () => {
+    shareVisible(prev => !prev);
+    sendid(id_pub);
+  };
 
   return (
     <View style={styles.card}>
       <View style={styles.headercard}>
-        <Image style={styles.imgPerfil} source={{uri: img}} />
+        <Image style={styles.imgPerfil} source={{uri: imgperfil}} />
         <Text style={styles.nameText}>{name}</Text>
-        <TouchableOpacity>
-          <MaterialC name="dots-vertical" size={25} color={'white'} />
-        </TouchableOpacity>
       </View>
       <View style={styles.data}>
-        <Text style={{color: 'white', fontWeight: '500'}}>{data}</Text>
+        {Array.isArray(data) && data.length > 1 ? (
+          <>
+            <Text style={styles.text}>{data[1].text}</Text>
+            <View style={styles.imageContainer}>
+              {data[0].img.length === 1 ? (
+                <Image
+                  source={{uri: data[0].img[0]}}
+                  style={styles.singleImage}
+                  resizeMode="cover"
+                />
+              ) : data[2]?.id.length > 0 ? (
+                // <Text style={styles.text}>{data[2]?.id}</Text>
+                <CardPubliShared img={imgperfil}  name={name} id_pub={data[2]?.id}/>
+              ) : (
+                data[0].img.map((item, index) => (
+                  <Image
+                    key={index}
+                    source={{uri: item}}
+                    style={[
+                      styles.multiImage,
+                      {marginRight: (index + 1) % 2 === 0 ? 0 : 5},
+                    ]}
+                    resizeMode="cover"
+                  />
+                ))
+              )}
+            </View>
+          </>
+        ) : (
+          <Text style={styles.text}>{data}</Text>
+        )}
         <TouchableOpacity style={styles.dataCom} onPress={handleShowComments}>
           <Text style={styles.commnets}>{comments.length} comentario</Text>
         </TouchableOpacity>
@@ -217,12 +235,6 @@ const CardWithPubs = ({img, data, name, id_pub, setVisible,sendid}) => {
           <MaterialC name="share-variant-outline" size={25} color={'#e3e3e3'} />
         </TouchableOpacity>
       </View>
-      {/* <CommentsComp
-        visible={show}
-        onClose={handleShowComments}
-        datacomments={comments}
-        idpub={id_pub}
-      /> */}
     </View>
   );
 };
@@ -230,14 +242,13 @@ const CardWithPubs = ({img, data, name, id_pub, setVisible,sendid}) => {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#353535',
-    height: 'auto',
     margin: -5,
     width: '100%',
     padding: 10,
+    marginBottom: 15,
   },
   headercard: {
     flexDirection: 'row',
-    marginVertical: 0,
     justifyContent: 'space-between',
     alignItems: 'center',
   },
@@ -254,6 +265,29 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: '500',
   },
+  data: {
+    padding: 10,
+  },
+  text: {
+    color: 'white',
+    fontWeight: '500',
+    marginBottom: 10,
+  },
+  imageContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  singleImage: {
+    width: '100%',
+    height: 250,
+    borderRadius: 10,
+  },
+  multiImage: {
+    width: '48%',
+    height: 150,
+    borderRadius: 10,
+    marginBottom: 5,
+  },
   footercard: {
     flexDirection: 'row',
     padding: 10,
@@ -263,12 +297,6 @@ const styles = StyleSheet.create({
   dataCom: {
     padding: 10,
     alignItems: 'flex-end',
-  },
-  data: {
-    padding: 10,
-  },
-  commnets: {
-    color: 'white',
   },
 });
 

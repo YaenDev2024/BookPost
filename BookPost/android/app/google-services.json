@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1053874147245",
+    "project_id": "bookpost-5011d",
+    "storage_bucket": "bookpost-5011d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1053874147245:android:8bcac101f674e779ba9b24",
+        "android_client_info": {
+          "package_name": "com.bookpost"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXrVYBz0XNetNipEwZykUgzg08zUF0KAU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
