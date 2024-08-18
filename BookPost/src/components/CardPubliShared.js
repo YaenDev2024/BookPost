@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dimensions,
   Image,
@@ -6,63 +6,90 @@ import {
   Text,
   View,
   StyleSheet,
-  ActivityIndicator, // Importar ActivityIndicator
+  ActivityIndicator,
 } from 'react-native';
-import {doc, onSnapshot} from '@firebase/firestore';
-import {db} from '../../config';
-import {useAuth} from '../hooks/Autentication';
+import { doc, onSnapshot } from '@firebase/firestore';
+import { db } from '../../config';
+import { useAuth } from '../hooks/Autentication';
+import {
+  GestureDetector,
+  GestureHandlerRootView,
+  Gesture,
+} from 'react-native-gesture-handler';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  clamp,
+} from 'react-native-reanimated';
 
-const CardPubliShared = ({img, id_pub}) => {
+const CardPubliShared = ({ img, id_pub }) => {
   const [data, setPubs] = useState([]);
   const [imgperfil, setImgPerfil] = useState('');
-  const {user} = useAuth();
-  const [loading, setLoading] = useState(true); // Nuevo estado de carga
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
+  const { width, height } = Dimensions.get('screen');
+
+  const scale = useSharedValue(1);
+  const startScale = useSharedValue(0);
+
+  const pinch = Gesture.Pinch()
+    .onStart(() => {
+      startScale.value = scale.value;
+    })
+    .onUpdate(event => {
+      scale.value = clamp(
+        startScale.value * event.scale,
+        0.8,
+        Math.min(width / 100, height / 100),
+      );
+    })
+    .onEnd(() => {
+      scale.value = withSpring(1, {
+        damping: 8,
+        stiffness: 50,
+      });
+    });
+
+  const boxAnimatedStyles = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   useEffect(() => {
     if (id_pub) {
-      console.log('ID Publicación:', id_pub);
       const docRef = doc(db, 'shared_publication', id_pub);
       const unsubscribe = onSnapshot(
         docRef,
         snapshot => {
           if (snapshot.exists()) {
-            console.log('Snapshot exists for shared_publication');
             const docData = snapshot.data();
-            console.log('Document Data:', docData);
-            const docRef = doc(db, 'publications', docData.id_pub);
-            const unsubscribe = onSnapshot(
-              docRef,
+            const pubRef = doc(db, 'publications', docData.id_pub);
+            const unsubscribePub = onSnapshot(
+              pubRef,
               snapshot => {
                 if (snapshot.exists()) {
                   const pubData = snapshot.data();
-                  console.log('Datos obtenidos:', pubData.data);
                   setName(pubData.name);
                   setPubs(pubData.data);
-                  setLoading(false); // Desactivar carga cuando los datos son obtenidos
+                  setLoading(false);
                 } else {
-                  console.log('No snapshot found for publications');
                   setLoading(false);
                 }
               },
               error => {
-                console.error(
-                  'Error al obtener el documento de publications:',
-                  error,
-                );
-                setLoading(false); // Desactivar carga en caso de error
+                console.error('Error al obtener el documento de publications:', error);
+                setLoading(false);
               },
             );
+            return () => unsubscribePub();
           } else {
-            console.log('No snapshot found for shared_publication');
             setLoading(false);
           }
         },
         error => {
-          console.error(
-            'Error al obtener el documento de shared_publication:',
-            error,
-          );
-          setLoading(false); // Desactivar carga en caso de error
+          console.error('Error al obtener el documento de shared_publication:', error);
+          setLoading(false);
         },
       );
       return () => unsubscribe();
@@ -70,7 +97,6 @@ const CardPubliShared = ({img, id_pub}) => {
   }, [id_pub]);
 
   if (loading) {
-    console.log('Still loading...');
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#ffffff" />
@@ -83,9 +109,8 @@ const CardPubliShared = ({img, id_pub}) => {
     <View style={styles.card}>
       <View style={styles.headercard}>
         <TouchableOpacity style={styles.nameText}>
-          <Image style={styles.imgPerfil} source={{uri: img}} />
-
-          <Text style={{color: 'white', fontWeight: 'bold', marginLeft:10}}>{name}</Text>
+          <Image style={styles.imgPerfil} source={{ uri: img }} />
+          <Text style={{ color: 'white', fontWeight: 'bold', marginLeft: 10 }}>{name}</Text>
         </TouchableOpacity>
       </View>
       <View style={styles.data}>
@@ -94,22 +119,33 @@ const CardPubliShared = ({img, id_pub}) => {
             <Text style={styles.text}>{data[1]?.text}</Text>
             <View style={styles.imageContainer}>
               {data[0]?.img.length === 1 ? (
-                <Image
-                  source={{uri: data[0]?.img[0]}}
-                  style={styles.singleImage}
-                  resizeMode="cover"
-                />
+                <GestureHandlerRootView style={styles.container}>
+                  <GestureDetector gesture={pinch}>
+                    <Animated.View style={[styles.singleImage, boxAnimatedStyles]}>
+                      <Image
+                        source={{ uri: data[0]?.img[0] }}
+                        style={styles.singleImage}
+                        resizeMode="cover"
+                      />
+                    </Animated.View>
+                  </GestureDetector>
+                </GestureHandlerRootView>
               ) : (
                 data[0]?.img.map((item, index) => (
-                  <Image
-                    key={index}
-                    source={{uri: item}}
-                    style={[
-                      styles.multiImage,
-                      {marginRight: (index + 1) % 2 === 0 ? 0 : 5},
-                    ]}
-                    resizeMode="cover"
-                  />
+                  <GestureHandlerRootView style={styles.container} key={index}>
+                    <GestureDetector gesture={pinch}>
+                      <Animated.View style={[styles.multiImage, boxAnimatedStyles]}>
+                        <Image
+                          source={{ uri: item }}
+                          style={[
+                            styles.multiImage,
+                            { marginRight: (index + 1) % 2 === 0 ? 0 : 5 },
+                          ]}
+                          resizeMode="cover"
+                        />
+                      </Animated.View>
+                    </GestureDetector>
+                  </GestureHandlerRootView>
                 ))
               )}
             </View>
@@ -149,8 +185,8 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     color: 'white',
     fontWeight: '500',
-    flexDirection:'row',
-    alignItems:'center'
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   data: {
     padding: 10,

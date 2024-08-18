@@ -20,17 +20,18 @@ import {
 } from '@firebase/firestore';
 import {db} from '../../config';
 import {useAuth} from '../hooks/Autentication';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
 import {
-  Directions,
   Gesture,
   GestureDetector,
   GestureHandlerRootView,
 } from 'react-native-gesture-handler';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  clamp,
+} from 'react-native-reanimated';
 import CardPubliShared from './CardPubliShared';
 
 const CardWithPubs = ({
@@ -173,7 +174,33 @@ const CardWithPubs = ({
     shareVisible(prev => !prev);
     sendid(id_pub);
   };
-  
+
+  const {height} = Dimensions.get('screen');
+
+  const scale = useSharedValue(1);
+  const startScale = useSharedValue(0);
+
+  const pinch = Gesture.Pinch()
+    .onStart(() => {
+      startScale.value = scale.value;
+    })
+    .onUpdate(event => {
+      scale.value = clamp(
+        startScale.value * event.scale,
+        0.8,
+        Math.min(width / 100, height / 100),
+      );
+    })
+    .onEnd(() => {
+      scale.value = withSpring(1, {
+        damping:8,
+        stiffness: 50,
+      });
+    });
+
+  const boxAnimatedStyles = useAnimatedStyle(() => ({
+    transform: [{scale: scale.value}],
+  }));
   return (
     <View style={styles.card}>
       <View style={styles.headercard}>
@@ -186,25 +213,43 @@ const CardWithPubs = ({
             <Text style={styles.text}>{data[1].text}</Text>
             <View style={styles.imageContainer}>
               {data[0].img.length === 1 ? (
-                <Image
-                  source={{uri: data[0].img[0]}}
-                  style={styles.singleImage}
-                  resizeMode="cover"
-                />
+                <GestureHandlerRootView style={styles.container}>
+                  <GestureDetector gesture={pinch}>
+                    <Animated.View
+                      style={[styles.singleImage, boxAnimatedStyles]}>
+                      <Image
+                        source={{uri: data[0].img[0]}}
+                        resizeMode="cover"
+                        style={styles.singleImage}
+                      />
+                    </Animated.View>
+                  </GestureDetector>
+                </GestureHandlerRootView>
               ) : data[2]?.id.length > 0 ? (
                 // <Text style={styles.text}>{data[2]?.id}</Text>
-                <CardPubliShared img={imgperfil}  name={name} id_pub={data[2]?.id}/>
+                <CardPubliShared
+                  img={imgperfil}
+                  name={name}
+                  id_pub={data[2]?.id}
+                />
               ) : (
                 data[0].img.map((item, index) => (
-                  <Image
-                    key={index}
-                    source={{uri: item}}
-                    style={[
-                      styles.multiImage,
-                      {marginRight: (index + 1) % 2 === 0 ? 0 : 5},
-                    ]}
-                    resizeMode="cover"
-                  />
+                  <GestureHandlerRootView style={styles.container}>
+                    <GestureDetector gesture={pinch}>
+                      <Animated.View
+                        style={[styles.singleImage, boxAnimatedStyles]}>
+                        <Image
+                          key={index}
+                          source={{uri: item}}
+                          style={[
+                            styles.multiImage,
+                            {marginRight: (index + 1) % 2 === 0 ? 0 : 5},
+                          ]}
+                          resizeMode="cover"
+                        />
+                      </Animated.View>
+                    </GestureDetector>
+                  </GestureHandlerRootView>
                 ))
               )}
             </View>
@@ -246,6 +291,11 @@ const styles = StyleSheet.create({
     width: '100%',
     padding: 10,
     marginBottom: 15,
+  },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headercard: {
     flexDirection: 'row',
