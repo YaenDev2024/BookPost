@@ -71,6 +71,9 @@ const HomeScreen = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+
+        
+
         const q = query(collection(db, 'publications'));
         const unsubscribe = onSnapshot(q, querySnapshot => {
           const updatedProducts = [];
@@ -103,10 +106,8 @@ const HomeScreen = () => {
 
   const setDataOfUser = async () => {
     const q = query(collection(db, 'users'), where('mail', '==', usermail));
-
     try {
       const querySnapshot = await getDocs(q);
-
       if (querySnapshot.empty) {
         console.log('No se encontraron datos para el usuario.');
       } else {

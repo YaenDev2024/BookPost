@@ -223,17 +223,19 @@ const VerticalPanResponder = ({idpub, onClose}) => {
           id: doc.id,
           ...doc.data(),
         }));
-  
+
         if (commentsData.length > 0) {
           const {id, img_profile, username} = commentsData[0];
-  
+
           if (res === true) {
+            const firstSpaceIndex = resUser.indexOf(' ');
+            const user = resUser.substring(0, firstSpaceIndex);
             const docRef = await addDoc(collection(db, 'answer_comments'), {
-              data: resUser + ' ' + comment,
+              data: user + ', ' + comment,
               date: serverTimestamp(),
               id_user: id,
             });
-  
+
             const newId = docRef.id;
             const setNewCommentToUSER = doc(db, 'comments', idComment);
             await updateDoc(setNewCommentToUSER, {
@@ -251,7 +253,7 @@ const VerticalPanResponder = ({idpub, onClose}) => {
               username: username,
             });
           }
-  
+
           setComment('');
           setRes(false);
           setResUser('');

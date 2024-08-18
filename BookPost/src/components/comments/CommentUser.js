@@ -30,7 +30,7 @@ const CommentUser = ({ user, data, img, date, iddoc, sendIdcomment }) => {
 
   useEffect(() => {
     checkCommnets();
-    return () => checkCommnets();
+    
   }, []);
 
   function timeAgo(firebaseTimestamp) {

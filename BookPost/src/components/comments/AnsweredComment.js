@@ -10,29 +10,39 @@ import {
   where,
 } from '@firebase/firestore';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
-
+const CommentContent = ({existUser, username, allText, answered_comments}) => {
+  if (existUser) {
+    return (
+      <View style={styles.commentTextContainer}>
+        <Text style={styles.commentText}>
+          <TouchableOpacity>
+            <Text style={styles.username}>{username}</Text>
+          </TouchableOpacity>
+          {allText}
+        </Text>
+      </View>
+    );
+  }
+  return <Text style={styles.commentText}>{answered_comments}</Text>;
+};
 const AnsweredComment = ({date, iddoc, idcomm, idcomment}) => {
-  const [answered_comments, setAnsweredCommnets] = useState('');
-  const [user, setDataUser] = useState([]);
-  const [dates, setDate] = useState([]);
-  const [loading, setLoading] = useState(true); // Estado para manejar la carga
+  const [answered_comments, setAnsweredComments] = useState('');
+  const [user, setDataUser] = useState({});
+  const [dates, setDate] = useState({});
+  const [loading, setLoading] = useState(true);
   const [existUser, setExistUser] = useState(false);
-  const [username, serUsername] = useState('');
-  const [alltext, setAllText] = useState('');
+  const [username, setUsername] = useState('');
+  const [allText, setAllText] = useState('');
+
   const getCommnent = async () => {
-    const dataComments = [];
-
-    if (Array.isArray(iddoc)) {
-      dataComments.push(...iddoc);
-    } else if (iddoc) {
-      dataComments.push(iddoc);
-    }
-
+    const dataComments = Array.isArray(iddoc) ? iddoc : [iddoc];
     dataComments.forEach(element => {
-      const unsub = onSnapshot(doc(db, 'answer_comments', element), docget => {
-        setAnsweredCommnets(docget.data().data);
-        setDate(docget.data().date);
-        const get = onSnapshot(doc(db, 'users', docget.data().id_user), doc => {
+      const unsub = onSnapshot(doc(db, 'answer_comments', element), docGet => {
+        const data = docGet.data();
+        setAnsweredComments(data.data);
+        setDate(data.date);
+        const userRef = doc(db, 'users', data.id_user);
+        const get = onSnapshot(userRef, doc => {
           setDataUser(doc.data());
           setLoading(false);
         });
@@ -40,14 +50,17 @@ const AnsweredComment = ({date, iddoc, idcomm, idcomment}) => {
     });
   };
 
-  const getuseridexist = async text => {
-    const userw = query(collection(db, 'users'), where('username', '==', text));
-    const commentsSnapshot = await getDocs(userw);
-    const userdata = commentsSnapshot.docs.map(doc => ({
+  const getUserIdExist = async text => {
+    const userQuery = query(
+      collection(db, 'users'),
+      where('username', '==', text),
+    );
+    const commentsSnapshot = await getDocs(userQuery);
+    const userData = commentsSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
     }));
-    if (userdata.length > 0) {
+    if (userData.length > 0) {
       setExistUser(true);
     }
   };
@@ -58,12 +71,12 @@ const AnsweredComment = ({date, iddoc, idcomm, idcomment}) => {
 
   useEffect(() => {
     if (answered_comments) {
-      const firstSpaceIndex = answered_comments.indexOf(' ');
+      const firstSpaceIndex = answered_comments.indexOf(',');
       if (firstSpaceIndex !== -1) {
         const user = answered_comments.substring(0, firstSpaceIndex);
         const restoTexto = answered_comments.substring(firstSpaceIndex + 1);
-        getuseridexist(user);
-        serUsername(user);
+        getUserIdExist(user);
+        setUsername(user);
         setAllText(restoTexto);
       } else {
         setAllText(answered_comments);
@@ -75,17 +88,16 @@ const AnsweredComment = ({date, iddoc, idcomm, idcomment}) => {
     if (!firebaseTimestamp || !firebaseTimestamp.seconds) {
       return 'Fecha no válida';
     }
-
     const date = new Date(
       firebaseTimestamp.seconds * 1000 +
         firebaseTimestamp.nanoseconds / 1000000,
     );
     const now = new Date();
-
     const diffInMs = now - date;
     const diffInMinutes = Math.floor(diffInMs / 60000);
     const diffInHours = Math.floor(diffInMinutes / 60);
     const diffInDays = Math.floor(diffInHours / 24);
+
     if (diffInMinutes < 1) {
       return 'Hace un momento';
     } else if (diffInMinutes === 1) {
@@ -107,7 +119,7 @@ const AnsweredComment = ({date, iddoc, idcomm, idcomment}) => {
     return (
       <SkeletonPlaceholder>
         <SkeletonPlaceholder.Item flexDirection="row" alignItems="center">
-          <SkeletonPlaceholder.Item width={30} height={30} borderRadius={25} />
+          <SkeletonPlaceholder.Item width={30} height={30} borderRadius={15} />
           <SkeletonPlaceholder.Item marginLeft={10} flex={1}>
             <SkeletonPlaceholder.Item
               style={{backgroundColor: '#4b4a4a'}}
@@ -142,18 +154,12 @@ const AnsweredComment = ({date, iddoc, idcomm, idcomment}) => {
         <Image style={styles.imgperfil} source={{uri: user.img_profile}} />
         <View style={styles.comment}>
           <Text style={styles.text}>{user.username}</Text>
-          <Text style={styles.name}>
-            {existUser ? (
-              <View style={{flexDirection: 'row'}}>
-                <TouchableOpacity>
-                  <Text style={{color: '#58f4fe'}}>{username + ''}</Text>
-                </TouchableOpacity>
-                <Text style={styles.name}>{alltext}</Text>
-              </View>
-            ) : (
-              answered_comments
-            )}
-          </Text>
+          <CommentContent
+            existUser={existUser}
+            username={username}
+            allText={allText}
+            answered_comments={answered_comments}
+          />
         </View>
       </View>
       <View style={styles.date}>
@@ -169,32 +175,45 @@ const AnsweredComment = ({date, iddoc, idcomm, idcomment}) => {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    marginTop: -15,
+    marginTop: -10,
   },
   imgperfil: {
     width: 30,
     height: 30,
-    borderRadius: 25,
+    borderRadius: 15,
   },
   comment: {
     flexDirection: 'column',
-    marginLeft: 5,
+    marginLeft: 10,
     backgroundColor: '#4b4a4a',
     padding: 12,
     borderRadius: 20,
-    maxWidth: '90%',
+    maxWidth: '85%',
+    overflow: 'hidden', // Ensures text does not overflow
   },
   text: {
     color: 'white',
     fontWeight: 'bold',
   },
-  name: {
+  commentTextContainer: {
+    flexDirection: 'row',
+  },
+  username: {
+    color: '#15a5cb',
+    fontWeight: 'bold',
+    marginRight: 0,
+    marginBottom:-4
+      },
+  commentText: {
     color: 'white',
+    flexShrink: 1, // Allows text to shrink and wrap inside the container
   },
   date: {
     flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
     position: 'static',
-    left: 63,
+    left: 65,
   },
   datetext: {
     marginRight: 10,

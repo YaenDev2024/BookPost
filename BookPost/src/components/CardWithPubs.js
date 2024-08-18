@@ -49,7 +49,7 @@ const CardWithPubs = ({
   const [userid, setUserID] = useState('');
   const {width} = Dimensions.get('screen');
   const [imgperfil, setImgPerfil] = useState('');
-
+  const [imgOfUser, setImgofuser] = useState('');
   useEffect(() => {
     const commentsQuery = query(
       collection(db, 'comments'),
@@ -114,6 +114,28 @@ const CardWithPubs = ({
 
     return () => unsubscribe();
   }, [id_pub, userid]);
+
+  useEffect(() => {
+    const q = query(collection(db, 'publications'), where('name', '==', name));
+
+    const unsuscribe = onSnapshot(q, querySnapshot => {
+      const updatedProducts = [];
+      querySnapshot.forEach(doc => {
+        const queryUserImg = query(
+          collection(db, 'users'),
+          where('username', '==', doc.data().name),
+        );
+
+        const unsub = onSnapshot(queryUserImg, querySnapshot => {
+          querySnapshot.forEach(docs => {
+            setImgofuser(docs.data().img_profile);
+          });
+        });
+      });
+    });
+
+    return () => unsuscribe();
+  }, []);
 
   const handleShowComments = () => {
     setVisible(prev => !prev);
@@ -193,7 +215,7 @@ const CardWithPubs = ({
     })
     .onEnd(() => {
       scale.value = withSpring(1, {
-        damping:8,
+        damping: 8,
         stiffness: 50,
       });
     });
@@ -204,7 +226,7 @@ const CardWithPubs = ({
   return (
     <View style={styles.card}>
       <View style={styles.headercard}>
-        <Image style={styles.imgPerfil} source={{uri: imgperfil}} />
+        <Image style={styles.imgPerfil} source={{uri: imgOfUser}} />
         <Text style={styles.nameText}>{name}</Text>
       </View>
       <View style={styles.data}>
