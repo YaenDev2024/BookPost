@@ -27,21 +27,6 @@ import LoadingScreen from '../hooks/LoadingScreen';
 import CardWithoutPubs from '../components/CardWithoutPubs';
 import CardWithPubs from '../components/CardWithPubs';
 import MaterialC from 'react-native-vector-icons/MaterialCommunityIcons';
-
-import {
-  Directions,
-  Gesture,
-  GestureDetector,
-  GestureHandlerRootView,
-} from 'react-native-gesture-handler';
-import Animated, {
-  withTiming,
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
-import CommentsComp from '../components/comments/CommentsComp';
-import Comments from '../components/comments/Comments';
 import VerticalPanResponder from '../components/comments/CommentModal';
 import PublicationModal from '../components/publish/PublicationModal';
 import SharePubModal from '../components/publish/SharePubModal';
@@ -53,18 +38,12 @@ const HomeScreen = () => {
   const [load, setLoad] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [existPub, setExistPub] = useState(false);
-  const {width, height} = Dimensions.get('screen');
 
   const [isVisible, setVisible] = useState(false);
-
   const [dataidpub, setDataidpub] = useState('');
-
   const [visibleModalPub, setVisibleModalPub] = useState(false);
-
   const [username, setUsername] = useState('');
-
   const [isShareVisible, setShareVisible] = useState(false);
-
   const [idUser, setIdUser] = useState('');
 
   const getData = text => {
@@ -82,39 +61,6 @@ const HomeScreen = () => {
     return Math.min(Math.max(val, min), max);
   }
   const {user} = useAuth();
-
-  const translationY = useSharedValue(0);
-  const prevTranslationY = useSharedValue(0);
-
-  const animatedStyles = useAnimatedStyle(() => ({
-    transform: [{translateY: translationY.value}],
-  }));
-
-  const pan = Gesture.Pan()
-    .minDistance(1)
-    .onStart(() => {
-      prevTranslationY.value = translationY.value;
-    })
-    .onUpdate(event => {
-      const maxTranslateY = height / 2 - 50;
-
-      const newTranslationY = clamp(
-        prevTranslationY.value + event.translationY,
-        -maxTranslateY,
-        maxTranslateY,
-      );
-
-      translationY.value = newTranslationY;
-
-      if (newTranslationY > 100) {
-        resetModalPosition();
-        setVisible(false);
-      }
-    });
-
-  const resetModalPosition = () => {
-    translationY.value = withSpring(0);
-  };
 
   const closeModal = () => {
     setVisible(false);

@@ -173,7 +173,7 @@ const CardWithPubs = ({
     shareVisible(prev => !prev);
     sendid(id_pub);
   };
-
+  
   return (
     <View style={styles.card}>
       <View style={styles.headercard}>

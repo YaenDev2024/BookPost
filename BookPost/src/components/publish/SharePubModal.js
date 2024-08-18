@@ -1,6 +1,8 @@
 import {
   addDoc,
   collection,
+  doc,
+  getDoc,
   limit,
   onSnapshot,
   orderBy,
@@ -47,38 +49,94 @@ const SharePubModal = ({visible, onClose, imgPerfil, user, idUser, idpub}) => {
   ).current;
 
   const sharePost = async () => {
-    setDisabled(true);
-    await addDoc(collection(db, 'shared_publication'), {
-      id_pub: idpub,
-      id_user: idUser,
-    });
+    // first validate if the actual pub, have an id, of the shared_pub
 
-    const refPub = collection(db, 'shared_publication');
-    const pubQuery = query(refPub, where('id_pub', '==', idpub), limit(1));
-    var idpubshared = '';
-    const unsubscribe = onSnapshot(pubQuery, snapshot => {
-      snapshot.docChanges().forEach(async change => {
-        const pushared = {id: change.doc.id, ...change.doc.data()};
+    const docRef = doc(db, 'publications', idpub);
+    const docSnap = await getDoc(docRef);
 
-        const localTimestamp = new Date();
-
-        const arr = [];
-        arr.push({img: []});
-        arr.push({text: text});
-        arr.push({id: pushared.id});
-
-        await addDoc(collection(db, 'publications'), {
-          comment: '',
-          comments_qty: 0,
-          data: arr,
-          datecreated: localTimestamp,
-          img_perfil: imgPerfil,
-          likes: 0,
-          name: user,
+    if (docSnap.exists()) {
+      if (!docSnap.data().data[2] || !docSnap.data().data[2].id) {
+        setDisabled(true);
+        await addDoc(collection(db, 'shared_publication'), {
+          id_pub: idpub,
+          id_user: idUser,
         });
-      });
-      onClose();
-    });
+
+        const refPub = collection(db, 'shared_publication');
+        const pubQuery = query(refPub, where('id_pub', '==', idpub), limit(1));
+        var idpubshared = '';
+        const unsubscribe = onSnapshot(pubQuery, snapshot => {
+          snapshot.docChanges().forEach(async change => {
+            const pushared = {id: change.doc.id, ...change.doc.data()};
+
+            const localTimestamp = new Date();
+
+            const arr = [];
+            arr.push({img: []});
+            arr.push({text: text});
+            arr.push({id: pushared.id});
+
+            await addDoc(collection(db, 'publications'), {
+              comment: '',
+              comments_qty: 0,
+              data: arr,
+              datecreated: localTimestamp,
+              img_perfil: imgPerfil,
+              likes: 0,
+              name: user,
+            });
+          });
+          onClose();
+        });
+      } else {
+        setDisabled(true);
+        var idPubShared = docSnap.data().data[2]?.id;
+        console.log(docSnap.data().data[2]?.id);
+        const docRefs = doc(db, 'shared_publication', idPubShared);
+        const docSnaps = await getDoc(docRefs);
+
+        if (docSnaps.exists()) {
+          var idofpubmain = docSnaps.data().id_pub;
+          await addDoc(collection(db, 'shared_publication'), {
+            id_pub: idofpubmain,
+            id_user: idUser,
+          });
+
+          const refPub = collection(db, 'shared_publication');
+          const pubQuery = query(
+            refPub,
+            where('id_pub', '==', idofpubmain),
+            limit(1),
+          );
+          var idpubshared = '';
+          const unsubscribe = onSnapshot(pubQuery, snapshot => {
+            snapshot.docChanges().forEach(async change => {
+              const pushared = {id: change.doc.id, ...change.doc.data()};
+
+              const localTimestamp = new Date();
+
+              const arr = [];
+              arr.push({img: []});
+              arr.push({text: text});
+              arr.push({id: pushared.id});
+
+              await addDoc(collection(db, 'publications'), {
+                comment: '',
+                comments_qty: 0,
+                data: arr,
+                datecreated: localTimestamp,
+                img_perfil: imgPerfil,
+                likes: 0,
+                name: user,
+              });
+            });
+            onClose();
+          });
+        }
+      }
+    } else {
+      console.log('No such document');
+    }
 
     return () => unsubscribe();
   };
