@@ -9,8 +9,7 @@ const CommentUser = ({ user, data, img, date, iddoc, sendIdcomment }) => {
   const [haveAnswerCommnets, sethaveAnsweredComments] = useState(false);
   const [dataIdComment, setDataIdComment] = useState([]);
   const [loading, setLoading] = useState(true); 
-  console.log('Fecha que se pasa a timeAgo:', date);
-
+  
   const checkCommnets = async () => {
     const unsub = onSnapshot(doc(db, 'comments', iddoc), doc => {
      

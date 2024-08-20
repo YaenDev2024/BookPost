@@ -36,7 +36,7 @@ const Comments = ({ boxAnimatedStyles, onClose, idpub }) => {
   const pan = useRef(new Animated.Value(0)).current;
   const [isVisible, setIsVisible] = useState(true); 
 
-    console.log(datacomments)
+    
     
   useEffect(() => {
     const commentsQuery = query(

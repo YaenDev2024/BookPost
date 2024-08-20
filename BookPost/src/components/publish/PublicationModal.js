@@ -17,7 +17,7 @@ import storage from '@react-native-firebase/storage';
 import {addDoc, collection} from '@firebase/firestore';
 import {db} from '../../../config';
 
-const PublicationModal = ({visible, onClose, imgPerfil, user}) => {
+const PublicationModal = ({visible, onClose, imgPerfil, user,id_user}) => {
   const [isLoadImage, setLoadImage] = useState(false);
   const [image, setImage] = useState([]);
   const [text, setText] = useState('');
@@ -92,7 +92,7 @@ const PublicationModal = ({visible, onClose, imgPerfil, user}) => {
         datecreated: localTimestamp,
         img_perfil: imgPerfil,
         likes: 0,
-        name: user,
+        id_user: id_user,
       });
       setPublish(true)
       onClose(); 

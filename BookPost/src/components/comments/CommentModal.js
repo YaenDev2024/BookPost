@@ -33,7 +33,7 @@ import {db} from '../../../config';
 import MaterialC from 'react-native-vector-icons/MaterialCommunityIcons';
 import CommentUser from './CommentUser';
 
-const VerticalPanResponder = ({idpub, onClose}) => {
+const VerticalPanResponder = ({idpub, onClose, id, img_profile, username}) => {
   const pan = useRef(new Animated.Value(0)).current;
   const [isVisible, setIsVisible] = useState(true); // Estado para controlar la visibilidad
   const {user} = useAuth();

@@ -42,6 +42,7 @@ const CardWithPubs = ({
   setVisible,
   sendid,
   shareVisible,
+  id_user,
 }) => {
   const [comments, setComments] = useState([]);
   const [isLiked, setLiked] = useState(false);
@@ -50,6 +51,8 @@ const CardWithPubs = ({
   const {width} = Dimensions.get('screen');
   const [imgperfil, setImgPerfil] = useState('');
   const [imgOfUser, setImgofuser] = useState('');
+  const [username,setUsername] = useState('')
+
   useEffect(() => {
     const commentsQuery = query(
       collection(db, 'comments'),
@@ -116,25 +119,24 @@ const CardWithPubs = ({
   }, [id_pub, userid]);
 
   useEffect(() => {
-    const q = query(collection(db, 'publications'), where('name', '==', name));
+    const q = query(
+      collection(db, 'publications'),
+      where('id_user', '==', id_user),
+    );
 
     const unsuscribe = onSnapshot(q, querySnapshot => {
       const updatedProducts = [];
-      querySnapshot.forEach(doc => {
-        const queryUserImg = query(
-          collection(db, 'users'),
-          where('username', '==', doc.data().name),
+      querySnapshot.forEach(docs => {
+        const unsubs = onSnapshot(
+          doc(db, 'users', docs.data().id_user),
+          doct => {
+            console.log('Current data: ', doct.data());
+            setImgofuser(doct.data().img_profile);
+            setUsername(doct.data().username)
+          },
         );
-
-        const unsub = onSnapshot(queryUserImg, querySnapshot => {
-          querySnapshot.forEach(docs => {
-            setImgofuser(docs.data().img_profile);
-          });
-        });
       });
     });
-
-    return () => unsuscribe();
   }, []);
 
   const handleShowComments = () => {
@@ -155,7 +157,7 @@ const CardWithPubs = ({
 
     if (userData.length > 0) {
       const iduser = userData[0].id;
-
+      
       const likeQuery = query(
         collection(db, 'likes_by_users'),
         where('id_publication', '==', id_pub),
@@ -227,7 +229,7 @@ const CardWithPubs = ({
     <View style={styles.card}>
       <View style={styles.headercard}>
         <Image style={styles.imgPerfil} source={{uri: imgOfUser}} />
-        <Text style={styles.nameText}>{name}</Text>
+        <Text style={styles.nameText}>{username}</Text>
       </View>
       <View style={styles.data}>
         {Array.isArray(data) && data.length > 1 ? (
@@ -251,7 +253,7 @@ const CardWithPubs = ({
                 // <Text style={styles.text}>{data[2]?.id}</Text>
                 <CardPubliShared
                   img={imgperfil}
-                  name={name}
+                  name={username}
                   id_pub={data[2]?.id}
                 />
               ) : (

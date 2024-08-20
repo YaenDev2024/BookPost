@@ -30,8 +30,9 @@ import MaterialC from 'react-native-vector-icons/MaterialCommunityIcons';
 import VerticalPanResponder from '../components/comments/CommentModal';
 import PublicationModal from '../components/publish/PublicationModal';
 import SharePubModal from '../components/publish/SharePubModal';
+import { getAuth } from '@firebase/auth';
 
-const HomeScreen = () => {
+const HomeScreen = ({navigation}) => {
   const [dataPubs, setPubs] = useState([]);
   const [usermail, setMail] = useState('');
   const [imgp, setImgP] = useState('');
@@ -68,12 +69,17 @@ const HomeScreen = () => {
     setShareVisible(false);
   };
 
+  const goToMainPage = () =>{
+    navigation.navigate('MainPageUser',{
+      imgPerfil: imgp,
+      username: username,
+      idUser: idUser,
+    });
+  }
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-
-        
-
         const q = query(collection(db, 'publications'));
         const unsubscribe = onSnapshot(q, querySnapshot => {
           const updatedProducts = [];
@@ -82,6 +88,7 @@ const HomeScreen = () => {
           });
           setPubs(updatedProducts);
           setExistPub(updatedProducts.length > 0);
+
         });
         return unsubscribe;
       } catch (error) {
@@ -153,7 +160,7 @@ const HomeScreen = () => {
         <>
           <View style={styles.headerContainer}>
             <Text style={styles.titleLeft}>BookPost</Text>
-            <TouchableOpacity onPress={handleLogout}>
+            <TouchableOpacity onPress={goToMainPage}>
               <Image source={{uri: imgp}} style={styles.imgPerfil} />
             </TouchableOpacity>
           </View>
@@ -190,7 +197,7 @@ const HomeScreen = () => {
                   data={item.data}
                   datecreated={item.datecreate}
                   img={item.img_perfil}
-                  name={item.name}
+                  id_user={item.id_user}
                   id_pub={item.id}
                   style={styles.card}
                   setVisible={setVisible}
@@ -201,6 +208,7 @@ const HomeScreen = () => {
             )}
           </ScrollView>
           {isVisible ? (
+            //id, img_profile, username
             <VerticalPanResponder idpub={dataidpub} onClose={closeModal} />
           ) : (
             ''
@@ -210,6 +218,7 @@ const HomeScreen = () => {
               onClose={closeModal}
               imgPerfil={imgp}
               user={username}
+              id_user={idUser}
             />
           ) : null}
           {isShareVisible ? (
