@@ -371,7 +371,10 @@ const styles = StyleSheet.create({
   dataCom: {
     padding: 10,
     alignItems: 'flex-end',
-  },
+  },commnets:{
+    color: 'white',
+    fontWeight: '500',
+  }
 });
 
 export default CardWithPubs;

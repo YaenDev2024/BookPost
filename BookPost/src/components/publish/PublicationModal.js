@@ -16,6 +16,9 @@ import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
 import storage from '@react-native-firebase/storage';
 import {addDoc, collection} from '@firebase/firestore';
 import {db} from '../../../config';
+import { PixelRatio } from 'react-native';
+
+const {height, width} = Dimensions.get('screen');
 
 const PublicationModal = ({visible, onClose, imgPerfil, user,id_user}) => {
   const [isLoadImage, setLoadImage] = useState(false);
@@ -23,7 +26,6 @@ const PublicationModal = ({visible, onClose, imgPerfil, user,id_user}) => {
   const [text, setText] = useState('');
   const [imgUrls, setImgUrls] = useState([]);
   const [isPublish,setPublish] =useState(true)
-  const {height, width} = Dimensions.get('screen');
 
   const uploadImageToFirebase = async imageUri => {
     const filename = imageUri.substring(imageUri.lastIndexOf('/') + 1);
@@ -159,9 +161,10 @@ const PublicationModal = ({visible, onClose, imgPerfil, user,id_user}) => {
           <Image style={styles.imgProfile} source={{uri: imgPerfil}} />
           <Text style={styles.textName}>{user}</Text>
         </View>
-        <View style={[styles.contentPub, {height: height * 0.7}]}>
+        <View style={styles.contentPub}>
           <TextInput
             placeholder="Crea una publicación con tu imaginación."
+            placeholderTextColor={'white'}
             style={styles.inputPub}
             multiline={true}
             onChangeText={text => setText(text)}></TextInput>
@@ -235,6 +238,7 @@ const styles = StyleSheet.create({
   textHeader: {
     fontSize: 20,
     marginLeft: 10,
+    color:'white'
   },
   headerPubli: {
     flexDirection: 'row',
@@ -256,8 +260,6 @@ const styles = StyleSheet.create({
   contentPub: {
     marginTop: -25,
     padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: 'gray',
   },
   inputPub: {
     width: '100%',
@@ -266,16 +268,23 @@ const styles = StyleSheet.create({
   },
   footerPub: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingLeft: 30,
-    paddingRight: 30,
-    paddingTop: 10,
+    justifyContent: 'space-evenly',
+    paddingVertical: height * 0.008, 
     alignItems: 'center',
+    width: '100%',
+    position: 'absolute',
+    bottom: 0,
+    backgroundColor: '#353535',
+    borderTopColor:'gray',
+    borderTopWidth:1
   },
   buttonPub: {
-    backgroundColor: '#1140ab',
-    padding: 10,
-    borderRadius: 5,
+    paddingVertical: height * 0.015, 
+    paddingHorizontal: width * 0.05, 
+    borderRadius: 10,
+    backgroundColor: '#0d7e9c',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   imgLoaded: {
     flexDirection: 'row',

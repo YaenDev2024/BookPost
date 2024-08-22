@@ -31,7 +31,8 @@ import VerticalPanResponder from '../components/comments/CommentModal';
 import PublicationModal from '../components/publish/PublicationModal';
 import SharePubModal from '../components/publish/SharePubModal';
 import { getAuth } from '@firebase/auth';
-
+const {height} = Dimensions.get('screen');
+const {width} = Dimensions.get('screen');
 const HomeScreen = ({navigation}) => {
   const [dataPubs, setPubs] = useState([]);
   const [usermail, setMail] = useState('');
@@ -47,6 +48,7 @@ const HomeScreen = ({navigation}) => {
   const [isShareVisible, setShareVisible] = useState(false);
   const [idUser, setIdUser] = useState('');
 
+ 
   const getData = text => {
     setDataidpub(text);
   };
@@ -177,7 +179,7 @@ const HomeScreen = ({navigation}) => {
                 placeholderTextColor="white"
                 onPress={setModalOpen}
               />
-              <TouchableOpacity style={styles.button}>
+              <TouchableOpacity style={styles.button} onPress={setModalOpen}>
                 <MaterialC
                   name="file-image-plus-outline"
                   size={35}
@@ -255,10 +257,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     width: '100%',
     paddingHorizontal: 15,
-    marginTop: 0,
     backgroundColor: '#353535',
     padding: 10,
-    marginTop: 35,
+    marginTop: height * 0.03,
     borderBottomColor: 'gray',
     borderBottomWidth: 1,
   },

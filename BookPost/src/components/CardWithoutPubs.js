@@ -4,7 +4,7 @@ import {StyleSheet, Text, View} from 'react-native';
 const CardWithoutPubs = () => {
   return (
     <View style={styles.card}>
-      <Text>No hay publicaciones para mostrar</Text>
+      <Text style={{color:'white'}}>No hay publicaciones para mostrar</Text>
     </View>
   );
 };
@@ -15,10 +15,10 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 10,
     margin: 10,
-    width: '90%',
+    width: '95%',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
+    paddingHorizontal: 20,
   },
 });
 

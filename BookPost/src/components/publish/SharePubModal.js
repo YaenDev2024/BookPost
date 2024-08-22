@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.0)',
   },
   modalContainer: {
     width: '100%',
@@ -199,6 +199,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#353535',
     borderRadius: 20,
     height: 350,
+    borderColor:'gray',
+    borderWidth: 1,
   },
   modalTitle: {
     fontSize: 18,
@@ -213,7 +215,6 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     alignSelf: 'center',
-    backgroundColor: '#2196F3',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 10,

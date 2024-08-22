@@ -1,5 +1,5 @@
-import {collection, onSnapshot, query, where} from '@firebase/firestore';
-import React, {useEffect, useState} from 'react';
+import { collection, onSnapshot, query, where } from '@firebase/firestore';
+import React, { useEffect, useState } from 'react';
 import {
   Image,
   ScrollView,
@@ -8,12 +8,13 @@ import {
   Text,
   View,
 } from 'react-native';
-import {TouchableOpacity} from 'react-native-gesture-handler';
-import {db} from '../../../config';
+import { TouchableOpacity } from 'react-native-gesture-handler';
+import { db } from '../../../config';
 import MaterialC from 'react-native-vector-icons/MaterialCommunityIcons';
+import CardWithoutPubs from '../CardWithoutPubs';
 
-const MainPageUser = ({route, navigation}) => {
-  const {imgPerfil, username, idUser} = route.params;
+const MainPageUser = ({ route, navigation }) => {
+  const { imgPerfil, username, idUser } = route.params;
   const [imgPort, setImgPort] = useState('');
   const [informationUser, setInformationUser] = useState('');
   const [followers, setFollowers] = useState(0);
@@ -37,7 +38,17 @@ const MainPageUser = ({route, navigation}) => {
     return () => unsub();
   }, []);
 
-  useEffect(() => {}, []);
+  useEffect(() => { }, []);
+
+  const handleShowScreenEditPerfil = () => {
+    navigation.navigate('EditPerfilUser', {
+      imgPerfil,
+      username,
+      idUser,
+      informationUser,
+      imgPort,
+    });
+  }
 
   return (
     <View style={styles.MainContainer}>
@@ -48,7 +59,7 @@ const MainPageUser = ({route, navigation}) => {
       />
       <View style={styles.headerMainPagePerfil}>
         <Text style={styles.headerMainPageText}>Perfil</Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={handleShowScreenEditPerfil}>
           <MaterialC name="account-cog-outline" size={35} color={'#fff'} />
         </TouchableOpacity>
       </View>
@@ -62,7 +73,7 @@ const MainPageUser = ({route, navigation}) => {
             style={styles.ImgPerfil}
           />
 
-          <View style={{flexDirection: 'row'}}>
+          <View style={{ flexDirection: 'row' }}>
             <View
               style={{
                 backgroundColor: '#e46b2f',
@@ -72,7 +83,7 @@ const MainPageUser = ({route, navigation}) => {
               }}></View>
             <Image
               source={{
-                uri: imgPort,
+                uri: imgPort === '' ? 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/predImg.jpg?alt=media&token=efe875cd-6d56-48d9-aec2-782d6f745e55' : imgPort,
               }}
               style={styles.portadaImg}
             />
@@ -84,13 +95,13 @@ const MainPageUser = ({route, navigation}) => {
             <Text style={styles.MainNameUserText}>{username}</Text>
           </View>
 
-          <View style={{justifyContent: 'center', alignItems: 'center'}}>
-            <Text>Seguidores</Text>
-            <Text>{followers}</Text>
+          <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={styles.text}>Seguidores</Text>
+            <Text style={styles.text}>{followers}</Text>
           </View>
-          <View style={{justifyContent: 'center', alignItems: 'center'}}>
-            <Text>Siguiendo</Text>
-            <Text>{followed}</Text>
+          <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={styles.text}>Siguiendo</Text>
+            <Text style={styles.text}>{followed}</Text>
           </View>
         </View>
         <TouchableOpacity
@@ -100,8 +111,8 @@ const MainPageUser = ({route, navigation}) => {
                 ? styles.btnUserOwner
                 : styles.btnFollow
               : isUserPerfil
-              ? styles.btnUserOwner
-              : styles.btnUnFollow
+                ? styles.btnUserOwner
+                : styles.btnUnFollow
           }>
           {/* <MaterialC name="account-plus" size={35} color={'#fff'} /> */}
           {isFollowed ? (
@@ -120,12 +131,14 @@ const MainPageUser = ({route, navigation}) => {
           <Text style={styles.MainInformationText}>Informacion</Text>
         </View>
         <View style={styles.MainInformationBio}>
-          <Text style={styles.MainInformationBioText}>{informationUser}</Text>
+          <Text style={styles.MainInformationBioText}>{informationUser === '' ? <Text>Describete como eres, a la gente le interesa.</Text> : informationUser}</Text>
         </View>
 
         <View style={styles.MainPublicationsContainer}>
           <Text style={styles.MainPublicationsText}>Publicaciones</Text>
         </View>
+        <CardWithoutPubs />
+
       </ScrollView>
     </View>
   );
@@ -147,6 +160,9 @@ const styles = StyleSheet.create({
   headerMainPageText: {
     fontSize: 30,
     color: 'white',
+  },
+  text: {
+    color: 'white'
   },
   photoContainerUser: {
     flexDirection: 'row',
