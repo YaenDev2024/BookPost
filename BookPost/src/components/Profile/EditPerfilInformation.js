@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import MaterialC from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const EditPerfilInformation = () => {
+const EditPerfilInformation = ({navigation}) => {
   return (
     <View style={styles.containerPerfil}>
       <StatusBar
@@ -17,7 +17,7 @@ const EditPerfilInformation = () => {
         barStyle="light-content"
       />
       <View style={styles.headerContainerTitle}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <MaterialC name="arrow-left" size={30} color={'#fff'} />
         </TouchableOpacity>
         <Text style={styles.headerTextTitle}>Configuracion</Text>

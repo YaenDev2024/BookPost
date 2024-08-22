@@ -58,6 +58,9 @@ const MainPageUser = ({ route, navigation }) => {
         barStyle="light-content"
       />
       <View style={styles.headerMainPagePerfil}>
+      <TouchableOpacity onPress={() => navigation.goBack()}>
+          <MaterialC name="arrow-left" size={35} color={'#fff'} />
+        </TouchableOpacity>
         <Text style={styles.headerMainPageText}>Perfil</Text>
         <TouchableOpacity onPress={handleShowScreenEditPerfil}>
           <MaterialC name="account-cog-outline" size={35} color={'#fff'} />
