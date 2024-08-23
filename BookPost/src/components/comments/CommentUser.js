@@ -1,33 +1,32 @@
 import React, {useEffect, useState} from 'react';
-import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Alert, Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import AnsweredComment from './AnsweredComment';
-import {doc, onSnapshot} from '@firebase/firestore';
+import {collection, doc, getDocs, onSnapshot, query, where} from '@firebase/firestore';
 import {db} from '../../../config';
 import CommentSkeleton from '../SkeletonLoader';
+import { useNavigation } from '@react-navigation/native';
 
-const CommentUser = ({user, data, img, date, iddoc, sendIdcomment}) => {
+const CommentUser = ({user, data, img, date, iddoc, sendIdcomment, onClose}) => {
   const [haveAnswerCommnets, sethaveAnsweredComments] = useState(false);
   const [dataIdComment, setDataIdComment] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadMoreComments, setloadMoreComments] = useState(false);
   const [commentsAnsweredId, setCommentsAnsweredId] = useState([]);
-
+  const [dataUser, setDataUser] = useState([]);
+  const navigation = useNavigation();
   const checkCommnets = async () => {
     const unsub = onSnapshot(doc(db, 'comments', iddoc), doc => {
       const commentsAnsweredId = doc.data().comments_answered_id;
-      
-      
+
       if (commentsAnsweredId && Array.isArray(commentsAnsweredId)) {
         sethaveAnsweredComments(commentsAnsweredId.length > 0);
         setCommentsAnsweredId(commentsAnsweredId);
-        if(commentsAnsweredId.length === 1)
-        {
-          setloadMoreComments(true)
+        if (commentsAnsweredId.length === 1) {
+          setloadMoreComments(true);
         }
-        if(commentsAnsweredId.length === 0)
-          {
-            setloadMoreComments(true)
-          }
+        if (commentsAnsweredId.length === 0) {
+          setloadMoreComments(true);
+        }
         // Check if there are new comments that are not yet loaded
         const newComments = commentsAnsweredId.slice(dataIdComment.length);
         if (newComments.length > 0) {
@@ -37,7 +36,7 @@ const CommentUser = ({user, data, img, date, iddoc, sendIdcomment}) => {
         sethaveAnsweredComments(false);
         setCommentsAnsweredId([]);
       }
-  
+
       setLoading(false);
     });
   };
@@ -87,6 +86,33 @@ const CommentUser = ({user, data, img, date, iddoc, sendIdcomment}) => {
       setloadMoreComments(true); // Disable the "load more" button if no comments left
     }
   };
+
+  const goToPerfilUser = async text => {
+
+      const userQuery = query(
+        collection(db, 'users'),
+        where('username', '==', text),
+      );
+      const commentsSnapshot = await getDocs(userQuery);
+      const userData = commentsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      if (userData.length > 0) {
+        // setDataUser(userData[0].id);
+        onClose();
+        navigation.navigate('MainPageUser',{
+          imgPerfil: img,
+          username: text,
+          idUser: userData[0].id,
+        })
+
+      }else{
+        Alert.alert('El usuario no existe')
+      }
+    
+  };
+
   return (
     <>
       {loading ? (
@@ -94,9 +120,13 @@ const CommentUser = ({user, data, img, date, iddoc, sendIdcomment}) => {
       ) : (
         <>
           <View style={styles.container}>
-            <Image style={styles.imgperfil} source={{uri: img}} />
+            <TouchableOpacity onPress={() => goToPerfilUser(user)}>
+              <Image style={styles.imgperfil} source={{uri: img}} />
+            </TouchableOpacity>
             <View style={styles.comment}>
-              <Text style={styles.text}>{user}</Text>
+              <TouchableOpacity>
+                <Text style={styles.text}>{user}</Text>
+              </TouchableOpacity>
               <Text style={styles.name}>{data}</Text>
             </View>
           </View>

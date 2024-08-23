@@ -1,5 +1,14 @@
-import { collection, onSnapshot, query, where } from '@firebase/firestore';
-import React, { useEffect, useState } from 'react';
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  onSnapshot,
+  query,
+  where,
+} from '@firebase/firestore';
+import React, {useEffect, useState} from 'react';
 import {
   Image,
   ScrollView,
@@ -8,19 +17,24 @@ import {
   Text,
   View,
 } from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
-import { db } from '../../../config';
+import {TouchableOpacity} from 'react-native-gesture-handler';
+import {db} from '../../../config';
 import MaterialC from 'react-native-vector-icons/MaterialCommunityIcons';
 import CardWithoutPubs from '../CardWithoutPubs';
+import {useAuth} from '../../hooks/Autentication';
 
-const MainPageUser = ({ route, navigation }) => {
-  const { imgPerfil, username, idUser } = route.params;
+const MainPageUser = ({route, navigation}) => {
+  const {imgPerfil, username, idUser} = route.params;
   const [imgPort, setImgPort] = useState('');
   const [informationUser, setInformationUser] = useState('');
   const [followers, setFollowers] = useState(0);
   const [followed, setFollowed] = useState(0);
   const [isUserPerfil, setUserPerfil] = useState(true);
   const [isFollowed, setIsFollowed] = useState(false);
+  const [idUserOwner, setIdUserOwner] = useState('');
+  const {user} = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [docFollow, setDocFollow] = useState('');
 
   useEffect(() => {
     const q = query(
@@ -38,7 +52,71 @@ const MainPageUser = ({ route, navigation }) => {
     return () => unsub();
   }, []);
 
-  useEffect(() => { }, []);
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!user) {
+        console.log('Usuario no autenticado');
+        setLoading(false);
+        return;
+      }
+    
+      setLoading(true);
+      const euser = user.email.toLowerCase();
+      console.log('Usuario autenticado:', euser);
+    
+      try {
+        const q = query(collection(db, 'users'), where('mail', '==', euser));
+        const querySnapshot = await getDocs(q);
+    
+        if (querySnapshot.empty) {
+          console.log('No se encontraron datos para el usuario.');
+          setLoading(false);
+          return;
+        }
+    
+        var userDoc =false; 
+        const iduserowner = ''
+        querySnapshot.forEach(doc => {
+          if(doc.id === idUser)
+          {
+            userDoc = true;
+            iduserowner = doc.id
+          }
+        });
+        if (userDoc) {
+          setUserPerfil(true);
+          setLoading(false);
+          return;
+        } else {
+          setUserPerfil(false);
+    
+          const queryFollows = query(
+            collection(db, 'follows'),
+            where('id_user_follow', '==', iduserowner),
+            where('id_user_followed', '==', idUser) // Optimización de la consulta
+          );
+    
+          const followSnapshot = await getDocs(queryFollows);
+    
+          if (!followSnapshot.empty) {
+            const followDoc = followSnapshot.docs[0];
+            setIsFollowed(true);
+            setDocFollow(followDoc.id);
+          } else {
+            setIsFollowed(false);
+          }
+    
+          setIdUserOwner(userDoc.id);
+        }
+      } catch (error) {
+        console.error('Error al obtener los datos:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [user]);
 
   const handleShowScreenEditPerfil = () => {
     navigation.navigate('EditPerfilUser', {
@@ -48,8 +126,20 @@ const MainPageUser = ({ route, navigation }) => {
       informationUser,
       imgPort,
     });
-  }
+  };
 
+  const handleFollowPerfil = async () => {
+    console.log(isFollowed);
+    if (!isFollowed) {
+      const add = addDoc(collection(db, 'follows'), {
+        id_user_follow: idUserOwner,
+        id_user_followed: idUser,
+      });
+    } else {
+      const docRef = doc(db, 'follows', docFollow);
+      await deleteDoc(docRef);
+    }
+  };
   return (
     <View style={styles.MainContainer}>
       <StatusBar
@@ -58,7 +148,7 @@ const MainPageUser = ({ route, navigation }) => {
         barStyle="light-content"
       />
       <View style={styles.headerMainPagePerfil}>
-      <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <MaterialC name="arrow-left" size={35} color={'#fff'} />
         </TouchableOpacity>
         <Text style={styles.headerMainPageText}>Perfil</Text>
@@ -76,7 +166,7 @@ const MainPageUser = ({ route, navigation }) => {
             style={styles.ImgPerfil}
           />
 
-          <View style={{ flexDirection: 'row' }}>
+          <View style={{flexDirection: 'row'}}>
             <View
               style={{
                 backgroundColor: '#e46b2f',
@@ -86,7 +176,10 @@ const MainPageUser = ({ route, navigation }) => {
               }}></View>
             <Image
               source={{
-                uri: imgPort === '' ? 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/predImg.jpg?alt=media&token=efe875cd-6d56-48d9-aec2-782d6f745e55' : imgPort,
+                uri:
+                  imgPort === ''
+                    ? 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/predImg.jpg?alt=media&token=efe875cd-6d56-48d9-aec2-782d6f745e55'
+                    : imgPort,
               }}
               style={styles.portadaImg}
             />
@@ -98,27 +191,30 @@ const MainPageUser = ({ route, navigation }) => {
             <Text style={styles.MainNameUserText}>{username}</Text>
           </View>
 
-          <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{justifyContent: 'center', alignItems: 'center'}}>
             <Text style={styles.text}>Seguidores</Text>
             <Text style={styles.text}>{followers}</Text>
           </View>
-          <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{justifyContent: 'center', alignItems: 'center'}}>
             <Text style={styles.text}>Siguiendo</Text>
             <Text style={styles.text}>{followed}</Text>
           </View>
         </View>
         <TouchableOpacity
+          onPress={handleFollowPerfil}
+          disabled={loading} // Deshabilitar el botón mientras carga
           style={
             isFollowed
               ? isUserPerfil
                 ? styles.btnUserOwner
                 : styles.btnFollow
               : isUserPerfil
-                ? styles.btnUserOwner
-                : styles.btnUnFollow
+              ? styles.btnUserOwner
+              : styles.btnUnFollow
           }>
-          {/* <MaterialC name="account-plus" size={35} color={'#fff'} /> */}
-          {isFollowed ? (
+          {loading ? (
+            <Text>Cargando...</Text> // Mostrar un estado neutral o indicador de carga
+          ) : isFollowed ? (
             isUserPerfil ? (
               <Text>Editar Perfil</Text>
             ) : (
@@ -134,14 +230,19 @@ const MainPageUser = ({ route, navigation }) => {
           <Text style={styles.MainInformationText}>Informacion</Text>
         </View>
         <View style={styles.MainInformationBio}>
-          <Text style={styles.MainInformationBioText}>{informationUser === '' ? <Text>Describete como eres, a la gente le interesa.</Text> : informationUser}</Text>
+          <Text style={styles.MainInformationBioText}>
+            {informationUser === '' ? (
+              <Text>Describete como eres, a la gente le interesa.</Text>
+            ) : (
+              informationUser
+            )}
+          </Text>
         </View>
 
         <View style={styles.MainPublicationsContainer}>
           <Text style={styles.MainPublicationsText}>Publicaciones</Text>
         </View>
         <CardWithoutPubs />
-
       </ScrollView>
     </View>
   );
@@ -165,7 +266,7 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   text: {
-    color: 'white'
+    color: 'white',
   },
   photoContainerUser: {
     flexDirection: 'row',

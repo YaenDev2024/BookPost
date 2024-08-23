@@ -345,6 +345,7 @@ const VerticalPanResponder = ({idpub, onClose, id, img_profile, username}) => {
                         iddoc={item.id}
                         sendIdcomment={setIdCommentSon}
                         loading={loading}
+                        onClose={onClose}
                       />
                     ) : (
                       <CommentUser
@@ -355,6 +356,8 @@ const VerticalPanResponder = ({idpub, onClose, id, img_profile, username}) => {
                         iddoc={item.id}
                         sendIdcomment={setIdCommentSon}
                         loading={loading}
+                        onClose={onClose}
+
                       />
                     )
                   }
