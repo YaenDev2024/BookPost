@@ -69,20 +69,19 @@ const MainPageUser = ({route, navigation}) => {
       try {
         const q = query(collection(db, 'users'), where('mail', '==', euser));
         const querySnapshot = await getDocs(q);
-    
+
         if (querySnapshot.empty) {
           console.log('No se encontraron datos para el usuario.');
           setLoading(false);
           return;
         }
-    
-        var userDoc =false; 
-        const iduserowner = ''
+
+        var userDoc = false;
+        const iduserowner = '';
         querySnapshot.forEach(doc => {
-          if(doc.id === idUser)
-          {
+          if (doc.id === idUser) {
             userDoc = true;
-            iduserowner = doc.id
+            iduserowner = doc.id;
           }
         });
         if (userDoc) {
@@ -91,15 +90,15 @@ const MainPageUser = ({route, navigation}) => {
           return;
         } else {
           setUserPerfil(false);
-    
+
           const queryFollows = query(
             collection(db, 'follows'),
             where('id_user_follow', '==', iduserowner),
-            where('id_user_followed', '==', idUser) // Optimización de la consulta
+            where('id_user_followed', '==', idUser), // Optimización de la consulta
           );
-    
+
           const followSnapshot = await getDocs(queryFollows);
-    
+
           if (!followSnapshot.empty) {
             const followDoc = followSnapshot.docs[0];
             setIsFollowed(true);
@@ -107,7 +106,7 @@ const MainPageUser = ({route, navigation}) => {
           } else {
             setIsFollowed(false);
           }
-        });
+        }
       } catch (error) {
         console.error('Error al obtener los datos:', error);
       } finally {
@@ -115,9 +114,9 @@ const MainPageUser = ({route, navigation}) => {
           setLoading(false);
         }, 100);
       }
-    };
 
-    fetchUserData();
+      fetchUserData();
+    };
   }, [user]);
 
   const handleShowScreenEditPerfil = () => {
@@ -179,9 +178,9 @@ const MainPageUser = ({route, navigation}) => {
         collection(db, 'follows'),
         where('id_user_follow', '==', idUser),
       );
-      const querySnapshot = await onSnapshot(qt,qf=>{
+      const querySnapshot = await onSnapshot(qt, qf => {
         setFollowed(qf.size);
-        console.log(qf.size)
+        console.log(qf.size);
       });
       //setFollowed(querySnapshot.size);
     };
@@ -311,7 +310,6 @@ const MainPageUser = ({route, navigation}) => {
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   MainContainer: {
     backgroundColor: '#272727',
