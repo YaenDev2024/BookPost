@@ -172,7 +172,7 @@ const PublicationModal = ({visible, onClose, imgPerfil, user,id_user}) => {
             <View style={styles.imgLoaded}>
               {isLoadImage
                 ? image.map((item, index) => (
-                    <View key={index} style={{margin: 5}}>
+                    <View key={index} style={{margin: 5, flexDirection:"row"}}>
                       <Image
                         source={{uri: item.uri}}
                         style={{width: 80, height: 80}}
@@ -265,6 +265,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 'auto',
     fontSize: 20,
+    color:'white'
   },
   footerPub: {
     flexDirection: 'row',

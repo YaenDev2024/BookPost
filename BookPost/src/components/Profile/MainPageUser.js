@@ -75,7 +75,7 @@ const MainPageUser = ({route, navigation}) => {
         }
     
         var userDoc =false; 
-        const iduserowner = ''
+        var iduserowner = ''
         querySnapshot.forEach(doc => {
           if(doc.id === idUser)
           {
