@@ -6,10 +6,12 @@ import {
   getDocs,
   onSnapshot,
   query,
+  updateDoc,
   where,
 } from '@firebase/firestore';
 import React, {useEffect, useState} from 'react';
 import {
+  Alert,
   Image,
   ScrollView,
   StatusBar,
@@ -35,7 +37,7 @@ const MainPageUser = ({route, navigation}) => {
   const {user} = useAuth();
   const [loading, setLoading] = useState(true);
   const [docFollow, setDocFollow] = useState('');
-
+  const [nameRed, setNameRed] = useState('');
   useEffect(() => {
     const q = query(
       collection(db, 'perfil_information'),
@@ -45,8 +47,8 @@ const MainPageUser = ({route, navigation}) => {
       querySnapshot.forEach(doc => {
         setInformationUser(doc.data().information);
         setImgPort(doc.data().imgPortada);
-        setFollowers(doc.data().followers);
-        setFollowed(doc.data().followed);
+        //setFollowers(doc.data().followers);
+        //setFollowed(doc.data().followed);
       });
     });
     return () => unsub();
@@ -59,59 +61,61 @@ const MainPageUser = ({route, navigation}) => {
         setLoading(false);
         return;
       }
-    
-      setLoading(true);
+
+      // setLoading(true);
       const euser = user.email.toLowerCase();
       console.log('Usuario autenticado:', euser);
-    
+
       try {
         const q = query(collection(db, 'users'), where('mail', '==', euser));
-        const querySnapshot = await getDocs(q);
-    
-        if (querySnapshot.empty) {
-          console.log('No se encontraron datos para el usuario.');
-          setLoading(false);
-          return;
-        }
-    
-        var userDoc =false; 
-        const iduserowner = ''
-        querySnapshot.forEach(doc => {
-          if(doc.id === idUser)
-          {
-            userDoc = true;
-            iduserowner = doc.id
+        var userDoc = false;
+        var iduserowner = '';
+
+        const querySnapshot = await getDocs(q).then(res => {
+          if (res.empty) {
+            console.log('No se encontraron datos para el usuario.');
+            setLoading(false);
+            return;
+          }
+          res.forEach(doc => {
+            setIdUserOwner(doc.id);
+            iduserowner = doc.id;
+            if (doc.id === idUser) {
+              userDoc = true;
+              iduserowner = doc.id;
+            }
+          });
+
+          if (userDoc) {
+            setUserPerfil(true);
+            setLoading(false);
+            return;
+          } else {
+            setUserPerfil(false);
+            const queryFollows = query(
+              collection(db, 'follows'),
+              where('id_user_follow', '==', iduserowner),
+              where('id_user_followed', '==', idUser),
+            );
+
+            const unsub = onSnapshot(queryFollows, q => {
+              if (q.empty) {
+                setIsFollowed(false);
+              } else {
+                q.forEach(doc => {
+                  setIsFollowed(true);
+                  setDocFollow(doc.id);
+                });
+              }
+            });
           }
         });
-        if (userDoc) {
-          setUserPerfil(true);
-          setLoading(false);
-          return;
-        } else {
-          setUserPerfil(false);
-    
-          const queryFollows = query(
-            collection(db, 'follows'),
-            where('id_user_follow', '==', iduserowner),
-            where('id_user_followed', '==', idUser) // Optimización de la consulta
-          );
-    
-          const followSnapshot = await getDocs(queryFollows);
-    
-          if (!followSnapshot.empty) {
-            const followDoc = followSnapshot.docs[0];
-            setIsFollowed(true);
-            setDocFollow(followDoc.id);
-          } else {
-            setIsFollowed(false);
-          }
-    
-          setIdUserOwner(userDoc.id);
-        }
       } catch (error) {
         console.error('Error al obtener los datos:', error);
       } finally {
-        setLoading(false);
+        setTimeout(() => {
+          setLoading(false);
+        }, 100);
       }
     };
 
@@ -129,17 +133,76 @@ const MainPageUser = ({route, navigation}) => {
   };
 
   const handleFollowPerfil = async () => {
-    console.log(isFollowed);
     if (!isFollowed) {
       const add = addDoc(collection(db, 'follows'), {
         id_user_follow: idUserOwner,
         id_user_followed: idUser,
       });
+
+      const upquery = query(
+        collection(db, 'perfil_information'),
+        where('id_user', '==', idUserOwner),
+      );
+      const querySnapshot = await getDocs(upquery);
+      querySnapshot.forEach(doc => {
+        var foll = parseInt(doc.data().followed);
+        updateDoc(doc.ref, {
+          followed: foll + 1,
+        });
+      });
     } else {
       const docRef = doc(db, 'follows', docFollow);
       await deleteDoc(docRef);
+      const upquery = query(
+        collection(db, 'perfil_information'),
+        where('id_user', '==', idUserOwner),
+      );
+      const querySnapshot = await getDocs(upquery);
+      querySnapshot.forEach(doc => {
+        var foll = parseInt(doc.data().followed);
+        updateDoc(doc.ref, {
+          followed: foll === 0 ? 0 : foll - 1,
+        });
+      });
     }
   };
+
+  useEffect(() => {
+    if (username.length > 13) {
+      setNameRed(username.substring(10, 0) + '...');
+    } else {
+      setNameRed(username);
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchFollowed = async () => {
+      const qt = query(
+        collection(db, 'follows'),
+        where('id_user_follow', '==', idUser),
+      );
+      const querySnapshot = await onSnapshot(qt,qf=>{
+        setFollowed(qf.size);
+        console.log(qf.size)
+      });
+      //setFollowed(querySnapshot.size);
+    };
+
+    const fetchFollowers = async () => {
+      const q = query(
+        collection(db, 'follows'),
+        where('id_user_followed', '==', idUser),
+      );
+      const querySnapshot = await onSnapshot(q, qy => {
+        setFollowers(qy.size);
+      });
+      //setFollowers(querySnapshot.size);
+    };
+
+    fetchFollowed();
+    fetchFollowers();
+  }, []);
+
   return (
     <View style={styles.MainContainer}>
       <StatusBar
@@ -188,7 +251,7 @@ const MainPageUser = ({route, navigation}) => {
 
         <View style={styles.MainNameUserContainer}>
           <View>
-            <Text style={styles.MainNameUserText}>{username}</Text>
+            <Text style={styles.MainNameUserText}>{nameRed}</Text>
           </View>
 
           <View style={{justifyContent: 'center', alignItems: 'center'}}>
@@ -200,32 +263,35 @@ const MainPageUser = ({route, navigation}) => {
             <Text style={styles.text}>{followed}</Text>
           </View>
         </View>
-        <TouchableOpacity
-          onPress={handleFollowPerfil}
-          disabled={loading} // Deshabilitar el botón mientras carga
-          style={
-            isFollowed
-              ? isUserPerfil
+        {loading ? null : (
+          <TouchableOpacity
+            onPress={isUserPerfil ? null : handleFollowPerfil}
+            disabled={loading}
+            style={
+              isFollowed
+                ? isUserPerfil
+                  ? styles.btnUserOwner
+                  : styles.btnFollow
+                : isUserPerfil
                 ? styles.btnUserOwner
-                : styles.btnFollow
-              : isUserPerfil
-              ? styles.btnUserOwner
-              : styles.btnUnFollow
-          }>
-          {loading ? (
-            <Text>Cargando...</Text> // Mostrar un estado neutral o indicador de carga
-          ) : isFollowed ? (
-            isUserPerfil ? (
+                : styles.btnUnFollow
+            }>
+            {loading ? (
+              <Text>Cargando...</Text>
+            ) : isFollowed ? (
+              isUserPerfil ? (
+                <Text>Editar Perfil</Text>
+              ) : (
+                <Text>Dejar de seguir</Text>
+              )
+            ) : isUserPerfil ? (
               <Text>Editar Perfil</Text>
             ) : (
-              <Text>Dejar de seguir</Text>
-            )
-          ) : isUserPerfil ? (
-            <Text>Editar Perfil</Text>
-          ) : (
-            <Text>Seguir</Text>
-          )}
-        </TouchableOpacity>
+              <Text>Seguir</Text>
+            )}
+          </TouchableOpacity>
+        )}
+
         <View style={styles.MainInformationContainer}>
           <Text style={styles.MainInformationText}>Informacion</Text>
         </View>
