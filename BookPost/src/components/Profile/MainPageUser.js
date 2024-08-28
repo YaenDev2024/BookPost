@@ -68,46 +68,44 @@ const MainPageUser = ({route, navigation}) => {
 
       try {
         const q = query(collection(db, 'users'), where('mail', '==', euser));
-        var userDoc = false;
-        var iduserowner = '';
-
-        const querySnapshot = await getDocs(q).then(res => {
-          if (res.empty) {
-            console.log('No se encontraron datos para el usuario.');
-            setLoading(false);
-            return;
+        const querySnapshot = await getDocs(q);
+    
+        if (querySnapshot.empty) {
+          console.log('No se encontraron datos para el usuario.');
+          setLoading(false);
+          return;
+        }
+    
+        var userDoc =false; 
+        const iduserowner = ''
+        querySnapshot.forEach(doc => {
+          if(doc.id === idUser)
+          {
+            userDoc = true;
+            iduserowner = doc.id
           }
-          res.forEach(doc => {
-            setIdUserOwner(doc.id);
-            iduserowner = doc.id;
-            if (doc.id === idUser) {
-              userDoc = true;
-              iduserowner = doc.id;
-            }
-          });
-
-          if (userDoc) {
-            setUserPerfil(true);
-            setLoading(false);
-            return;
+        });
+        if (userDoc) {
+          setUserPerfil(true);
+          setLoading(false);
+          return;
+        } else {
+          setUserPerfil(false);
+    
+          const queryFollows = query(
+            collection(db, 'follows'),
+            where('id_user_follow', '==', iduserowner),
+            where('id_user_followed', '==', idUser) // Optimización de la consulta
+          );
+    
+          const followSnapshot = await getDocs(queryFollows);
+    
+          if (!followSnapshot.empty) {
+            const followDoc = followSnapshot.docs[0];
+            setIsFollowed(true);
+            setDocFollow(followDoc.id);
           } else {
-            setUserPerfil(false);
-            const queryFollows = query(
-              collection(db, 'follows'),
-              where('id_user_follow', '==', iduserowner),
-              where('id_user_followed', '==', idUser),
-            );
-
-            const unsub = onSnapshot(queryFollows, q => {
-              if (q.empty) {
-                setIsFollowed(false);
-              } else {
-                q.forEach(doc => {
-                  setIsFollowed(true);
-                  setDocFollow(doc.id);
-                });
-              }
-            });
+            setIsFollowed(false);
           }
         });
       } catch (error) {

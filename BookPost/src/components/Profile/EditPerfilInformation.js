@@ -50,6 +50,7 @@ const EditPerfilInformation = ({navigation}) => {
           </Text>
         </View>
         <TouchableOpacity style={styles.btnSettings}>
+          <MaterialC name="newspaper-variant-multiple-outline" size={18} color={'#fff'} />
           <Text style={styles.titleBtn}>Feed</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.btnSettings}>
