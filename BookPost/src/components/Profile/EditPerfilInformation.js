@@ -8,7 +8,10 @@ import {
 } from 'react-native';
 import MaterialC from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const EditPerfilInformation = ({navigation}) => {
+const EditPerfilInformation = ({route,navigation}) => {
+  
+  const {idUser} = route.params;
+  console.log('SI?',idUser)
   return (
     <View style={styles.containerPerfil}>
       <StatusBar
@@ -30,7 +33,7 @@ const EditPerfilInformation = ({navigation}) => {
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.btnSettings} onPress={() => navigation.navigate('PerfilSettings')}>
+        <TouchableOpacity style={styles.btnSettings} onPress={() => navigation.navigate('PerfilSettings',{idUser})}>
           <MaterialC name="account-edit-outline" size={18} color={'#fff'} />
           <Text style={styles.titleBtn}>Editar Perfil</Text>
         </TouchableOpacity>

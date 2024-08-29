@@ -38,6 +38,8 @@ const MainPageUser = ({route, navigation}) => {
   const [loading, setLoading] = useState(true);
   const [docFollow, setDocFollow] = useState('');
   const [nameRed, setNameRed] = useState('');
+
+
   useEffect(() => {
     const q = query(
       collection(db, 'perfil_information'),
