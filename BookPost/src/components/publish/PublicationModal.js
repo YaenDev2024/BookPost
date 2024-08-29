@@ -158,7 +158,7 @@ const PublicationModal = ({visible, onClose, imgPerfil, user,id_user}) => {
         </View>
 
         <View style={styles.headerPubli}>
-          <Image style={styles.imgProfile} source={{uri: imgPerfil}} />
+          <Image style={styles.imgProfile} source={{uri: imgPerfil ? imgPerfil : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1'}} />
           <Text style={styles.textName}>{user}</Text>
         </View>
         <View style={styles.contentPub}>
@@ -174,7 +174,7 @@ const PublicationModal = ({visible, onClose, imgPerfil, user,id_user}) => {
                 ? image.map((item, index) => (
                     <View key={index} style={{margin: 5, flexDirection:"row"}}>
                       <Image
-                        source={{uri: item.uri}}
+                        source={{uri: item.uri ? item.uri: 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1'}}
                         style={{width: 80, height: 80}}
                       />
                       <TouchableOpacity onPress={() => removeImg(index)}>

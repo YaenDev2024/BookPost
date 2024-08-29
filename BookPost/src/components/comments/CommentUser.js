@@ -121,10 +121,10 @@ const CommentUser = ({user, data, img, date, iddoc, sendIdcomment, onClose}) => 
         <>
           <View style={styles.container}>
             <TouchableOpacity onPress={() => goToPerfilUser(user)}>
-              <Image style={styles.imgperfil} source={{uri: img}} />
+              <Image style={styles.imgperfil} source={{uri: img ? img : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1'}} />
             </TouchableOpacity>
             <View style={styles.comment}>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => goToPerfilUser(user)}>
                 <Text style={styles.text}>{user}</Text>
               </TouchableOpacity>
               <Text style={styles.name}>{data}</Text>
@@ -150,6 +150,7 @@ const CommentUser = ({user, data, img, date, iddoc, sendIdcomment, onClose}) => 
                       iddoc={item}
                       idcomm={sendIdcomment}
                       idcomment={iddoc}
+                      onClose={onClose}
                     />
                   </View>
                 ))

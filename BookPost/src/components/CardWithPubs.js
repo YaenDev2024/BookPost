@@ -33,6 +33,7 @@ import Animated, {
   clamp,
 } from 'react-native-reanimated';
 import CardPubliShared from './CardPubliShared';
+import {useNavigation} from '@react-navigation/native';
 
 const CardWithPubs = ({
   img,
@@ -51,7 +52,9 @@ const CardWithPubs = ({
   const {width} = Dimensions.get('screen');
   const [imgperfil, setImgPerfil] = useState('');
   const [imgOfUser, setImgofuser] = useState('');
-  const [username,setUsername] = useState('')
+  const [username, setUsername] = useState('');
+
+  const navigation = useNavigation();
 
   useEffect(() => {
     const commentsQuery = query(
@@ -130,9 +133,9 @@ const CardWithPubs = ({
         const unsubs = onSnapshot(
           doc(db, 'users', docs.data().id_user),
           doct => {
-            console.log('Current data: ', doct.data());
+            
             setImgofuser(doct.data().img_profile);
-            setUsername(doct.data().username)
+            setUsername(doct.data().username);
           },
         );
       });
@@ -157,7 +160,7 @@ const CardWithPubs = ({
 
     if (userData.length > 0) {
       const iduser = userData[0].id;
-      
+
       const likeQuery = query(
         collection(db, 'likes_by_users'),
         where('id_publication', '==', id_pub),
@@ -225,11 +228,37 @@ const CardWithPubs = ({
   const boxAnimatedStyles = useAnimatedStyle(() => ({
     transform: [{scale: scale.value}],
   }));
+
+  const goToPerfilUser = async text => {
+    const userQuery = query(
+      collection(db, 'users'),
+      where('username', '==', text),
+    );
+    const commentsSnapshot = await getDocs(userQuery);
+    const userData = commentsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    if (userData.length > 0) {
+      // setDataUser(userData[0].id);
+      // onClose();
+      navigation.navigate('MainPageUser', {
+        imgPerfil: img,
+        username: text,
+        idUser: userData[0].id,
+      });
+    } else {
+      Alert.alert('El usuario no existe');
+    }
+  };
+
   return (
     <View style={styles.card}>
       <View style={styles.headercard}>
-        <Image style={styles.imgPerfil} source={{uri: imgOfUser}} />
-        <Text style={styles.nameText}>{username}</Text>
+        <TouchableOpacity style={{flexDirection:'row', justifyContent:'center', alignItems:'center'}} onPress={() => goToPerfilUser(username)}>
+          <Image style={styles.imgPerfil} source={{uri: imgOfUser ? imgOfUser : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1'}} />
+          <Text style={styles.nameText}>{username}</Text>
+        </TouchableOpacity>
       </View>
       <View style={styles.data}>
         {Array.isArray(data) && data.length > 1 ? (
@@ -242,7 +271,7 @@ const CardWithPubs = ({
                     <Animated.View
                       style={[styles.singleImage, boxAnimatedStyles]}>
                       <Image
-                        source={{uri: data[0].img[0]}}
+                        source={{uri: data[0].img[0] ? data[0].img[0] : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1'}}
                         resizeMode="cover"
                         style={styles.singleImage}
                       />
@@ -264,7 +293,7 @@ const CardWithPubs = ({
                         style={[styles.singleImage, boxAnimatedStyles]}>
                         <Image
                           key={index}
-                          source={{uri: item}}
+                          source={{uri: item ? item : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1'}}
                           style={[
                             styles.multiImage,
                             {marginRight: (index + 1) % 2 === 0 ? 0 : 5},
@@ -353,7 +382,7 @@ const styles = StyleSheet.create({
   },
   singleImage: {
     width: '100%',
-    height: 250,
+    height: 500,
     borderRadius: 10,
   },
   multiImage: {
@@ -371,10 +400,11 @@ const styles = StyleSheet.create({
   dataCom: {
     padding: 10,
     alignItems: 'flex-end',
-  },commnets:{
+  },
+  commnets: {
     color: 'white',
     fontWeight: '500',
-  }
+  },
 });
 
 export default CardWithPubs;

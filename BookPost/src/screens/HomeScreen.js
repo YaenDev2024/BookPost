@@ -30,7 +30,7 @@ import MaterialC from 'react-native-vector-icons/MaterialCommunityIcons';
 import VerticalPanResponder from '../components/comments/CommentModal';
 import PublicationModal from '../components/publish/PublicationModal';
 import SharePubModal from '../components/publish/SharePubModal';
-import { getAuth } from '@firebase/auth';
+import {getAuth} from '@firebase/auth';
 const {height} = Dimensions.get('screen');
 const {width} = Dimensions.get('screen');
 const HomeScreen = ({navigation}) => {
@@ -48,7 +48,6 @@ const HomeScreen = ({navigation}) => {
   const [isShareVisible, setShareVisible] = useState(false);
   const [idUser, setIdUser] = useState('');
 
- 
   const getData = text => {
     setDataidpub(text);
   };
@@ -71,13 +70,13 @@ const HomeScreen = ({navigation}) => {
     setShareVisible(false);
   };
 
-  const goToMainPage = () =>{
-    navigation.navigate('MainPageUser',{
+  const goToMainPage = () => {
+    navigation.navigate('MainPageUser', {
       imgPerfil: imgp,
       username: username,
       idUser: idUser,
     });
-  }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -90,15 +89,23 @@ const HomeScreen = ({navigation}) => {
           });
           setPubs(updatedProducts);
           setExistPub(updatedProducts.length > 0);
-
         });
         return unsubscribe;
       } catch (error) {
         console.error('Error al obtener los datos:', error);
       }
     };
+    var promResuelta = fetchData();
 
-    fetchData();
+    promResuelta.then(
+      function (result) {
+        console.log('Promesa resuelta: ', result);
+        setLoad(false);
+      },
+      function (error) {
+        console.error('Error en la promesa: ', error);
+      },
+    );
   }, [refreshing]);
 
   useEffect(() => {
@@ -131,18 +138,18 @@ const HomeScreen = ({navigation}) => {
     }
   };
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoad(false);
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, []);
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     setLoad(false);
+  //   }, 1500);
+  //   return () => clearTimeout(timer);
+  // }, []);
 
   const onRefresh = () => {
     setRefreshing(true);
     setTimeout(() => {
       setRefreshing(false);
-    }, 2000);
+    }, 1000);
   };
 
   const setModalOpen = () => {
@@ -163,16 +170,35 @@ const HomeScreen = ({navigation}) => {
           <View style={styles.headerContainer}>
             <Text style={styles.titleLeft}>BookPost</Text>
             <TouchableOpacity onPress={goToMainPage}>
-              <Image source={{uri: imgp}} style={styles.imgPerfil} />
+              <Image
+                source={{
+                  uri: imgp
+                    ? imgp
+                    : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1',
+                }}
+                style={styles.imgPerfil}
+              />
             </TouchableOpacity>
           </View>
 
           <ScrollView
             style={styles.scrollView}
             contentContainerStyle={styles.scrollViewContent}
-            showsVerticalScrollIndicator={false}>
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }>
             <View style={styles.cardThink}>
-              <Image source={{uri: imgp}} style={styles.imgPerfil} />
+              <TouchableOpacity onPress={goToMainPage}>
+                <Image
+                  source={{
+                    uri: imgp
+                      ? imgp
+                      : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1',
+                  }}
+                  style={styles.imgPerfil}
+                />
+              </TouchableOpacity>
               <TextInput
                 style={styles.inputThink}
                 placeholder="¿Qué piensas?"

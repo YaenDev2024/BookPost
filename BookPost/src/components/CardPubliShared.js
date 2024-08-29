@@ -57,6 +57,7 @@ const CardPubliShared = ({ img, id_pub }) => {
   }));
 
   useEffect(() => {
+    console.log(id_pub)
     if (id_pub) {
       const docRef = doc(db, 'shared_publication', id_pub);
       const unsubscribe = onSnapshot(
@@ -70,7 +71,11 @@ const CardPubliShared = ({ img, id_pub }) => {
               snapshot => {
                 if (snapshot.exists()) {
                   const pubData = snapshot.data();
-                  setName(pubData.name);
+                  const getNameRef = doc(db, 'users',pubData.id_user);
+                  const getName = onSnapshot(getNameRef, doc=>{
+                    setName(doc.data().username);
+                  }
+                  )
                   setPubs(pubData.data);
                   setLoading(false);
                 } else {
@@ -109,7 +114,7 @@ const CardPubliShared = ({ img, id_pub }) => {
     <View style={styles.card}>
       <View style={styles.headercard}>
         <TouchableOpacity style={styles.nameText}>
-          <Image style={styles.imgPerfil} source={{ uri: img }} />
+          <Image style={styles.imgPerfil} source={{ uri: img ? img : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1' }} />
           <Text style={{ color: 'white', fontWeight: 'bold', marginLeft: 10 }}>{name}</Text>
         </TouchableOpacity>
       </View>
@@ -123,7 +128,7 @@ const CardPubliShared = ({ img, id_pub }) => {
                   <GestureDetector gesture={pinch}>
                     <Animated.View style={[styles.singleImage, boxAnimatedStyles]}>
                       <Image
-                        source={{ uri: data[0]?.img[0] }}
+                        source={{ uri: data[0]?.img[0] ? data[0]?.img[0] : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1' }}
                         style={styles.singleImage}
                         resizeMode="cover"
                       />
@@ -136,7 +141,7 @@ const CardPubliShared = ({ img, id_pub }) => {
                     <GestureDetector gesture={pinch}>
                       <Animated.View style={[styles.multiImage, boxAnimatedStyles]}>
                         <Image
-                          source={{ uri: item }}
+                          source={{ uri: item ? item : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1' }}
                           style={[
                             styles.multiImage,
                             { marginRight: (index + 1) % 2 === 0 ? 0 : 5 },
@@ -202,7 +207,7 @@ const styles = StyleSheet.create({
   },
   singleImage: {
     width: '100%',
-    height: 250,
+    height: 500,
     borderRadius: 10,
   },
   multiImage: {

@@ -81,6 +81,7 @@ const SharePubModal = ({visible, onClose, imgPerfil, user, idUser, idpub}) => {
               comments_qty: 0,
               data: arr,
               datecreated: localTimestamp,
+              id_user: idUser,
               img_perfil: imgPerfil,
               likes: 0,
               name: user,
@@ -156,7 +157,7 @@ const SharePubModal = ({visible, onClose, imgPerfil, user, idUser, idpub}) => {
             </View>
 
             <View style={styles.containerUser}>
-              <Image style={styles.imgPerfil} source={{uri: imgPerfil}} />
+              <Image style={styles.imgPerfil} source={{uri: imgPerfil ? imgPerfil : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1'}} />
               <Text style={styles.hname}>{user}</Text>
             </View>
             <View style={styles.containerInput}>

@@ -10,22 +10,10 @@ import {
   where,
 } from '@firebase/firestore';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
-const CommentContent = ({existUser, username, allText, answered_comments}) => {
-  if (existUser) {
-    return (
-      <View style={styles.commentTextContainer}>
-        <Text style={styles.commentText}>
-          <TouchableOpacity>
-            <Text style={styles.username}>{username}</Text>
-          </TouchableOpacity>
-          {allText}
-        </Text>
-      </View>
-    );
-  }
-  return <Text style={styles.commentText}>{answered_comments}</Text>;
-};
-const AnsweredComment = ({date, iddoc, idcomm, idcomment}) => {
+import { useNavigation } from '@react-navigation/native';
+
+
+const AnsweredComment = ({date, iddoc, idcomm, idcomment,onClose}) => {
   const [answered_comments, setAnsweredComments] = useState('');
   const [user, setDataUser] = useState({});
   const [dates, setDate] = useState({});
@@ -33,6 +21,9 @@ const AnsweredComment = ({date, iddoc, idcomm, idcomment}) => {
   const [existUser, setExistUser] = useState(false);
   const [username, setUsername] = useState('');
   const [allText, setAllText] = useState('');
+  const [userRes,setDataUserRes] = useState('');
+
+  const navigation = useNavigation();
 
   const getCommnent = async () => {
     const dataComments = Array.isArray(iddoc) ? iddoc : [iddoc];
@@ -46,6 +37,10 @@ const AnsweredComment = ({date, iddoc, idcomm, idcomment}) => {
           setDataUser(doc.data());
           setLoading(false);
         });
+        const userResRef = doc(db,'users', data.id_user_res);
+        const getUserRes = onSnapshot(userResRef, doc=>{
+          setDataUserRes(doc.data());
+        })
       });
     });
   };
@@ -70,19 +65,17 @@ const AnsweredComment = ({date, iddoc, idcomm, idcomment}) => {
   }, [iddoc]);
 
   useEffect(() => {
-    if (answered_comments) {
+    if (answered_comments && userRes.username) {
       const firstSpaceIndex = answered_comments.indexOf(',');
-      if (firstSpaceIndex !== -1) {
-        const user = answered_comments.substring(0, firstSpaceIndex);
-        const restoTexto = answered_comments.substring(firstSpaceIndex + 1);
-        getUserIdExist(user);
-        setUsername(user);
-        setAllText(restoTexto);
-      } else {
-        setAllText(answered_comments);
-      }
+      const user = answered_comments.substring(0, firstSpaceIndex);
+      const restoTexto = answered_comments.substring(firstSpaceIndex + 1);
+      getUserIdExist(userRes.username);
+      setUsername(userRes.username + ' ');
+      setAllText(restoTexto);
+    } else if (answered_comments) {
+      setAllText(answered_comments);
     }
-  }, [answered_comments]);
+  }, [answered_comments, userRes]);
 
   function timeAgo(firebaseTimestamp) {
     if (!firebaseTimestamp || !firebaseTimestamp.seconds) {
@@ -115,6 +108,48 @@ const AnsweredComment = ({date, iddoc, idcomm, idcomment}) => {
     }
   }
 
+
+  const goToPerfilUser = async text => {
+
+    const userQuery = query(
+      collection(db, 'users'),
+      where('username', '==', text),
+    );
+    const commentsSnapshot = await getDocs(userQuery);
+    const userData = commentsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    if (userData.length > 0) {
+      // setDataUser(userData[0].id);
+      onClose();
+      navigation.navigate('MainPageUser',{
+        imgPerfil: user.img_profile,
+        username: text,
+        idUser: userData[0].id,
+      })
+
+    }else{
+      Alert.alert('El usuario no existe')
+    }
+  
+};
+
+const CommentContent = ({existUser, username, allText, answered_comments}) => {
+  
+  return (
+    <View style={styles.commentTextContainer}>
+      <Text style={styles.commentText}>
+        <TouchableOpacity onPress={() => goToPerfilUser(user.username)}>
+          <Text style={styles.username}>{username}</Text>
+        </TouchableOpacity>
+        {allText}
+      </Text>
+    </View>
+  );
+
+//return <Text style={styles.commentText}>{answered_comments}</Text>;
+};
   if (loading) {
     return (
       <SkeletonPlaceholder>
@@ -151,9 +186,13 @@ const AnsweredComment = ({date, iddoc, idcomm, idcomment}) => {
   return (
     <>
       <View style={styles.container}>
-        <Image style={styles.imgperfil} source={{uri: user.img_profile}} />
+        <TouchableOpacity onPress={() => goToPerfilUser(user.username)}>
+          <Image style={styles.imgperfil} source={{uri: user.img_profile ? user.img_profile : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1'}} />
+        </TouchableOpacity>
         <View style={styles.comment}>
-          <Text style={styles.text}>{user.username}</Text>
+          <TouchableOpacity onPress={() => goToPerfilUser(user.username)}>
+            <Text style={styles.text}>{user.username}</Text>
+          </TouchableOpacity>
           <CommentContent
             existUser={existUser}
             username={username}

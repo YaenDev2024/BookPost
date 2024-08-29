@@ -94,7 +94,7 @@ const MainPageUser = ({route, navigation}) => {
           const queryFollows = query(
             collection(db, 'follows'),
             where('id_user_follow', '==', iduserowner),
-            where('id_user_followed', '==', idUser), // Optimización de la consulta
+            where('id_user_followed', '==', idUser), 
           );
 
           const followSnapshot = await getDocs(queryFollows);
@@ -221,7 +221,7 @@ const MainPageUser = ({route, navigation}) => {
         <View style={styles.photoContainerUser}>
           <Image
             source={{
-              uri: imgPerfil,
+              uri: imgPerfil ? imgPerfil : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1',
             }}
             style={styles.ImgPerfil}
           />

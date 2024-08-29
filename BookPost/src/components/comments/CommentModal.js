@@ -51,6 +51,7 @@ const VerticalPanResponder = ({idpub, onClose, id, img_profile, username}) => {
   const [loading, setLoading] = useState(false);
   const [temp, setTemp] = useState(false);
   const [isDisabled, setisDisabled] = useState(false);
+  const [usernameUserRes, setUserNameRes] = useState('');
 
   const panResponder = useRef(
     PanResponder.create({
@@ -223,17 +224,28 @@ const VerticalPanResponder = ({idpub, onClose, id, img_profile, username}) => {
           id: doc.id,
           ...doc.data(),
         }));
+        const getUserQuery = query(
+          collection(db, 'users'),
+          where('username', '==', usernameUserRes),
+        );
+        const getUserIdRes = await getDocs(getUserQuery);
+        const idres = getUserIdRes.docs.map(doc => ({
+          id: doc.id,
+          ... doc.data(),
+        }))
 
         if (commentsData.length > 0) {
           const {id, img_profile, username} = commentsData[0];
-
+         
           if (res === true) {
             const firstSpaceIndex = resUser.indexOf(' ');
+            console.log('index: ', firstSpaceIndex);
             const user = resUser.substring(0, firstSpaceIndex);
             const docRef = await addDoc(collection(db, 'answer_comments'), {
-              data: user + ', ' + comment,
+              data: comment,
               date: serverTimestamp(),
               id_user: id,
+              id_user_res: idres[0].id
             });
 
             const newId = docRef.id;
@@ -276,6 +288,7 @@ const VerticalPanResponder = ({idpub, onClose, id, img_profile, username}) => {
     setRes(true);
     setResUser(user + ' ');
     setIdcomment(text);
+    setUserNameRes(user);
   };
 
   const cancelComment = () => {
@@ -357,7 +370,6 @@ const VerticalPanResponder = ({idpub, onClose, id, img_profile, username}) => {
                         sendIdcomment={setIdCommentSon}
                         loading={loading}
                         onClose={onClose}
-
                       />
                     )
                   }
@@ -369,7 +381,7 @@ const VerticalPanResponder = ({idpub, onClose, id, img_profile, username}) => {
                 {res ? (
                   <Text style={styles.res}>
                     Respondiendo:{' '}
-                    <Text style={styles.resUser}>{resUser.trim()}</Text>{' '}
+                    <Text style={styles.resUser}>{resUser.trim()}</Text>
                     <Text onPress={cancelComment}>- Cancelar</Text>
                   </Text>
                 ) : null}
