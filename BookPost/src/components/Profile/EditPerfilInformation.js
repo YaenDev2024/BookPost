@@ -30,7 +30,7 @@ const EditPerfilInformation = ({navigation}) => {
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.btnSettings}>
+        <TouchableOpacity style={styles.btnSettings} onPress={() => navigation.navigate('PerfilSettings')}>
           <MaterialC name="account-edit-outline" size={18} color={'#fff'} />
           <Text style={styles.titleBtn}>Editar Perfil</Text>
         </TouchableOpacity>
