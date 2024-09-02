@@ -74,6 +74,7 @@ const CardPubliShared = ({ img, id_pub }) => {
                   const getNameRef = doc(db, 'users',pubData.id_user);
                   const getName = onSnapshot(getNameRef, doc=>{
                     setName(doc.data().username);
+                    setImgPerfil(doc.data().img_profile)
                   }
                   )
                   setPubs(pubData.data);
@@ -114,7 +115,7 @@ const CardPubliShared = ({ img, id_pub }) => {
     <View style={styles.card}>
       <View style={styles.headercard}>
         <TouchableOpacity style={styles.nameText}>
-          <Image style={styles.imgPerfil} source={{ uri: img ? img : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1' }} />
+          <Image style={styles.imgPerfil} source={{ uri: imgperfil ? imgperfil : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1' }} />
           <Text style={{ color: 'white', fontWeight: 'bold', marginLeft: 10 }}>{name}</Text>
         </TouchableOpacity>
       </View>

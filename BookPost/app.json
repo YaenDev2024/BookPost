@@ -1,4 +1,8 @@
 {
   "name": "BookPost",
-  "displayName": "BookPost"
+  "displayName": "BookPost",
+  "react-native-google-mobile-ads": {
+    "android_app_id": "ca-app-pub-3477493054350988~5996709625",
+    "ios_app_id": "ca-app-pub-xxxxxxxx~xxxxxxxx"
+  }
 }

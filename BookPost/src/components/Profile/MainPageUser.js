@@ -57,68 +57,79 @@ const MainPageUser = ({route, navigation}) => {
   }, []);
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    const unsubscribeUserData = () => {
       if (!user) {
         console.log('Usuario no autenticado');
         setLoading(false);
         return;
       }
-
-      // setLoading(true);
       const euser = user.email.toLowerCase();
       console.log('Usuario autenticado:', euser);
-
-      try {
-        const q = query(collection(db, 'users'), where('mail', '==', euser));
-        const querySnapshot = await getDocs(q);
-
+      setLoading(false);
+  
+      const q = query(collection(db, 'users'), where('mail', '==', euser));
+  
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
         if (querySnapshot.empty) {
           console.log('No se encontraron datos para el usuario.');
           setLoading(false);
           return;
         }
-
-        var userDoc = false;
-        const iduserowner = '';
-        querySnapshot.forEach(doc => {
+        
+        let userDoc = false;
+        let iduserowner = '';
+        querySnapshot.forEach((doc) => {
           if (doc.id === idUser) {
             userDoc = true;
             iduserowner = doc.id;
+            if (doc.data().username.length > 13) {
+              setNameRed(doc.data().username.substring(10, 0) + '...');
+            } else {
+              setNameRed(doc.data().username);
+            }
+          } else {
+            setIdUserOwner(doc.id);
           }
         });
+  
         if (userDoc) {
           setUserPerfil(true);
-          setLoading(false);
-          return;
         } else {
           setUserPerfil(false);
-
+          console.log(idUserOwner,'s')
           const queryFollows = query(
             collection(db, 'follows'),
-            where('id_user_follow', '==', iduserowner),
-            where('id_user_followed', '==', idUser), 
+            where('id_user_follow', '==', idUserOwner),
+            where('id_user_followed', '==', idUser)
           );
-
-          const followSnapshot = await getDocs(queryFollows);
-
-          if (!followSnapshot.empty) {
-            const followDoc = followSnapshot.docs[0];
-            setIsFollowed(true);
-            setDocFollow(followDoc.id);
-          } else {
-            setIsFollowed(false);
-          }
+  
+          const unsubscribeFollow = onSnapshot(queryFollows, (followSnapshot) => {
+            if (!followSnapshot.empty) {
+              const followDoc = followSnapshot.docs[0];
+              setIsFollowed(true);
+              setDocFollow(followDoc.id);
+            } else {
+              setIsFollowed(false);
+            }
+          });
+  
+          // Asegúrate de limpiar el snapshot de follows cuando el componente se desmonte
+          return () => {
+            unsubscribeFollow();
+          };
         }
-      } catch (error) {
+      }, (error) => {
         console.error('Error al obtener los datos:', error);
-      } finally {
-        setTimeout(() => {
-          setLoading(false);
-        }, 100);
-      }
-
-      fetchUserData();
+      });
+  
+      // Asegúrate de limpiar el snapshot cuando el componente se desmonte
+      return () => {
+        unsubscribe();
+      };
     };
+  
+    const unsubscribe = unsubscribeUserData();
+   
   }, [user]);
 
   const handleShowScreenEditPerfil = () => {
@@ -138,17 +149,17 @@ const MainPageUser = ({route, navigation}) => {
         id_user_followed: idUser,
       });
 
-      const upquery = query(
-        collection(db, 'perfil_information'),
-        where('id_user', '==', idUserOwner),
-      );
-      const querySnapshot = await getDocs(upquery);
-      querySnapshot.forEach(doc => {
-        var foll = parseInt(doc.data().followed);
-        updateDoc(doc.ref, {
-          followed: foll + 1,
-        });
-      });
+      // const upquery = query(
+      //   collection(db, 'perfil_information'),
+      //   where('id_user', '==', idUserOwner),
+      // );
+      // const querySnapshot = await getDocs(upquery);
+      // querySnapshot.forEach(doc => {
+      //   var foll = parseInt(doc.data().followed);
+      //   updateDoc(doc.ref, {
+      //     followed: foll + 1,
+      //   });
+      // });
     } else {
       const docRef = doc(db, 'follows', docFollow);
       await deleteDoc(docRef);
@@ -168,11 +179,11 @@ const MainPageUser = ({route, navigation}) => {
 
   useEffect(() => {
     if (username.length > 13) {
-      setNameRed(username.substring(10, 0) + '...');
+      setNameRed(username.substring(0, 10) + '...');
     } else {
       setNameRed(username);
     }
-  }, []);
+  }, [username]);
 
   useEffect(() => {
     const fetchFollowed = async () => {
@@ -264,7 +275,7 @@ const MainPageUser = ({route, navigation}) => {
         </View>
         {loading ? null : (
           <TouchableOpacity
-            onPress={isUserPerfil ? null : handleFollowPerfil}
+            onPress={isUserPerfil ? () => navigation.navigate('PerfilSettings',{idUser}) : handleFollowPerfil}
             disabled={loading}
             style={
               isFollowed

@@ -7,11 +7,18 @@ import {
   View,
 } from 'react-native';
 import MaterialC from 'react-native-vector-icons/MaterialCommunityIcons';
+import { auth } from '../../../config';
 
 const EditPerfilInformation = ({route,navigation}) => {
   
   const {idUser} = route.params;
-  console.log('SI?',idUser)
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+    } catch (err) {
+      console.log('Error al cerrar sesión: ', err.message);
+    }
+  };
   return (
     <View style={styles.containerPerfil}>
       <StatusBar
@@ -82,6 +89,10 @@ const EditPerfilInformation = ({route,navigation}) => {
         <TouchableOpacity style={styles.btnSettings}>
           <MaterialC name="family-tree" size={18} color={'#fff'} />
           <Text style={styles.titleBtn}>Comunidad</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.btnSettings} onPress={handleLogout}>
+          <MaterialC name="logout" size={18} color={'#fff'} />
+          <Text style={styles.titleBtn}>Cerrar Sesion</Text>
         </TouchableOpacity>
       </View>
     </View>

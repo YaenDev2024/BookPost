@@ -135,6 +135,7 @@ const CardWithPubs = ({
           doct => {
             
             setImgofuser(doct.data().img_profile);
+            
             setUsername(doct.data().username);
           },
         );

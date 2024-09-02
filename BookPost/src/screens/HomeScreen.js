@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -12,14 +12,19 @@ import {
   TextInput,
   Modal,
   Dimensions,
+  Alert,
+  FlatList,
+  Platform,
 } from 'react-native';
 import img from '../../assets/2.png';
 import {auth, db} from '../../config';
 import {
   collection,
   getDocs,
+  limit,
   onSnapshot,
   query,
+  startAfter,
   where,
 } from '@firebase/firestore';
 import {useAuth} from '../hooks/Autentication';
@@ -31,6 +36,14 @@ import VerticalPanResponder from '../components/comments/CommentModal';
 import PublicationModal from '../components/publish/PublicationModal';
 import SharePubModal from '../components/publish/SharePubModal';
 import {getAuth} from '@firebase/auth';
+import {
+  BannerAd,
+  BannerAdSize,
+  TestIds,
+  useForeground,
+} from 'react-native-google-mobile-ads';
+import CardWithAds from '../components/CardWithAds';
+
 const {height} = Dimensions.get('screen');
 const {width} = Dimensions.get('screen');
 const HomeScreen = ({navigation}) => {
@@ -40,28 +53,23 @@ const HomeScreen = ({navigation}) => {
   const [load, setLoad] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [existPub, setExistPub] = useState(false);
-
+  const [count, setCount] = useState(0);
   const [isVisible, setVisible] = useState(false);
   const [dataidpub, setDataidpub] = useState('');
   const [visibleModalPub, setVisibleModalPub] = useState(false);
   const [username, setUsername] = useState('');
   const [isShareVisible, setShareVisible] = useState(false);
   const [idUser, setIdUser] = useState('');
+  const [lastVisible, setLastVisible] = useState(null);
+
+  const adUnitId = __DEV__
+    ? TestIds.ADAPTIVE_BANNER
+    : 'ca-app-pub-3477493054350988/4075718325';
 
   const getData = text => {
     setDataidpub(text);
   };
 
-  const handleLogout = async () => {
-    try {
-      await auth.signOut();
-    } catch (err) {
-      console.log('Error al cerrar sesión: ', err.message);
-    }
-  };
-  function clamp(val, min, max) {
-    return Math.min(Math.max(val, min), max);
-  }
   const {user} = useAuth();
 
   const closeModal = () => {
@@ -79,16 +87,21 @@ const HomeScreen = ({navigation}) => {
   };
 
   useEffect(() => {
+    setLoad(true);
+    setRefreshing(false);
+
     const fetchData = async () => {
       try {
-        const q = query(collection(db, 'publications'));
+        const q = query(collection(db, 'publications'), limit(4));
         const unsubscribe = onSnapshot(q, querySnapshot => {
           const updatedProducts = [];
           querySnapshot.forEach(doc => {
             updatedProducts.push({id: doc.id, ...doc.data()});
           });
+          setPubs([]);
           setPubs(updatedProducts);
           setExistPub(updatedProducts.length > 0);
+          setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
         });
         return unsubscribe;
       } catch (error) {
@@ -120,42 +133,119 @@ const HomeScreen = ({navigation}) => {
     }
   }, [usermail]);
 
-  const setDataOfUser = async () => {
+  const setDataOfUser = () => {
     const q = query(collection(db, 'users'), where('mail', '==', usermail));
-    try {
-      const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) {
-        console.log('No se encontraron datos para el usuario.');
-      } else {
-        querySnapshot.forEach(doc => {
-          setIdUser(doc.id);
-          setImgP(doc.data().img_profile);
-          setUsername(doc.data().username);
-        });
-      }
-    } catch (error) {
-      console.error('Error al obtener los datos:', error);
-    }
+    const unsubscribe = onSnapshot(
+      q,
+      querySnapshot => {
+        if (querySnapshot.empty) {
+          console.log('No se encontraron datos para el usuario.');
+        } else {
+          querySnapshot.forEach(doc => {
+            setIdUser(doc.id);
+            setImgP(doc.data().img_profile);
+            setUsername(doc.data().username);
+          });
+        }
+      },
+      error => {
+        console.error('Error al obtener los datos:', error);
+      },
+    );
+
+    // Opcional: devuelve la función de cancelación para usarla más adelante
+    return unsubscribe;
   };
 
-  // useEffect(() => {
-  //   const timer = setTimeout(() => {
-  //     setLoad(false);
-  //   }, 1500);
-  //   return () => clearTimeout(timer);
-  // }, []);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoad(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const onRefresh = () => {
     setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
   };
 
   const setModalOpen = () => {
     setVisibleModalPub(true);
   };
 
+  const loadMorePubs = async () => {
+    if (!lastVisible) {
+      scrollToTop();
+      setRefreshing(true);
+
+      return;
+    } // No cargar más si no hay más datos
+
+    try {
+      const q = query(
+        collection(db, 'publications'),
+        startAfter(lastVisible),
+        limit(4),
+      );
+
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const updatedProducts = [];
+        querySnapshot.forEach(doc => {
+          updatedProducts.push({id: doc.id, ...doc.data()});
+        });
+
+        // Eliminar duplicados basados en el id
+        const newPubs = [...dataPubs, ...updatedProducts];
+        const uniquePubs = Array.from(new Set(newPubs.map(pub => pub.id))).map(
+          id => {
+            return newPubs.find(pub => pub.id === id);
+          },
+        );
+
+        setPubs(uniquePubs);
+        setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
+      } else {
+        setLastVisible(null);
+      }
+    } catch (error) {
+      console.error('Error al cargar más publicaciones:', error);
+    }
+  };
+
+  const bannerRef = useRef(null);
+  useForeground(() => {
+    Platform.OS === 'ios' && bannerRef.current?.load();
+  });
+  const renderItem = ({item, index}) => {
+    if (index % 3 === 2) {
+      // Show ad every 2 items (0-based index, so 2 means after 2 items)
+      return <CardWithAds ids={index} key={index} />;
+    }
+    if (!existPub) {
+      return <CardWithoutPubs style={styles.card} />;
+    }
+    return (
+      <CardWithPubs
+        likes={item.likes}
+        commentsqty={item.commnets_qty}
+        data={item.data}
+        datecreated={item.datecreate}
+        img={item.img_perfil}
+        id_user={item.id_user}
+        id_pub={item.id}
+        style={styles.card}
+        setVisible={setVisible}
+        shareVisible={setShareVisible}
+        sendid={getData}
+      />
+    );
+  };
+
+  const flatListRef = useRef(null);
+
+  const scrollToTop = () => {
+    flatListRef.current.scrollToOffset({offset: 0, animated: true});
+  };
   return (
     <View style={styles.mainContainer}>
       <StatusBar
@@ -168,7 +258,7 @@ const HomeScreen = ({navigation}) => {
       ) : (
         <>
           <View style={styles.headerContainer}>
-            <Text style={styles.titleLeft}>BookPost</Text>
+            <Text onPress={scrollToTop} style={styles.titleLeft}>BookPost</Text>
             <TouchableOpacity onPress={goToMainPage}>
               <Image
                 source={{
@@ -180,8 +270,46 @@ const HomeScreen = ({navigation}) => {
               />
             </TouchableOpacity>
           </View>
+          <View style={styles.cardThink}>
+            <TouchableOpacity onPress={goToMainPage}>
+              <Image
+                source={{
+                  uri: imgp
+                    ? imgp
+                    : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1',
+                }}
+                style={styles.imgPerfil}
+              />
+            </TouchableOpacity>
+            <TextInput
+              style={styles.inputThink}
+              placeholder="¿Qué piensas?"
+              placeholderTextColor="white"
+              onPress={setModalOpen}
+            />
+            <TouchableOpacity style={styles.button} onPress={setModalOpen}>
+              <MaterialC
+                name="file-image-plus-outline"
+                size={35}
+                color={'#1f9c0d'}
+              />
+            </TouchableOpacity>
+          </View>
 
-          <ScrollView
+          <FlatList
+            style={styles.scrollView}
+            data={dataPubs}
+            keyExtractor={item => item.id}
+            renderItem={renderItem}
+            onEndReached={loadMorePubs}
+            onEndReachedThreshold={0.1}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+            ref={flatListRef}
+          />
+
+          {/* <ScrollView
             style={styles.scrollView}
             contentContainerStyle={styles.scrollViewContent}
             showsVerticalScrollIndicator={false}
@@ -234,7 +362,7 @@ const HomeScreen = ({navigation}) => {
                 />
               ))
             )}
-          </ScrollView>
+          </ScrollView> */}
           {isVisible ? (
             //id, img_profile, username
             <VerticalPanResponder idpub={dataidpub} onClose={closeModal} />
@@ -299,7 +427,7 @@ const styles = StyleSheet.create({
   cardThink: {
     backgroundColor: '#353535',
     height: 56,
-    marginBottom: 10,
+    marginBottom: 0,
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
@@ -309,6 +437,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 3,
     elevation: 5,
+    borderBottomColor: 'gray',
+    borderBottomWidth: 1,
   },
   imgPerfil: {
     height: 40,

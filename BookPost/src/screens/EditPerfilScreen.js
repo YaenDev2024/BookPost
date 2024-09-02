@@ -56,14 +56,14 @@ const EditPerfilScreen = ({route, navigation}) => {
   };
 
   // section to take de all info user --this information is registered at the moment the user created the account
-
+  // START
   useEffect(() => {
     const docRef = doc(db, 'users', idUser);
     const fetchUserInformation = async () => {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        if (docSnap.data().isAlready === true) {
+        if (docSnap.data().isAlreadyEditPersonalInformation === true) {
           setDisabled(true);
         }
         console.log('Document data:', docSnap.data());
@@ -122,24 +122,41 @@ const EditPerfilScreen = ({route, navigation}) => {
     fetchUserInformation();
   }, []);
 
+  const saveContactInformation = async () => {
+    setUpdating(true);
+    const localTimestamp = new Date();
+    const userInfo = doc(db, 'users', idUser);
+    try {
+      await updateDoc(userInfo, {
+        mail: email,
+        phone: phone,
+        address: address,
+        city: city,
+        country: country,
+      });
+
+      console.log('Datos actualizados correctamente');
+    } catch (error) {
+      console.error('Error al actualizar los datos: ', error);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const saveInformationPersonal = async () => {
     setUpdating(true);
-
+    const localTimestamp = new Date();
     const userInfo = doc(db, 'users', idUser);
     try {
       await updateDoc(userInfo, {
         name: fullName,
         lastname: lastName,
         username: userName,
-        mail: email,
         birthday: date,
         intereses: selectedValue,
         genero: Genero,
-        phone: phone,
-        address: address,
-        city: city,
-        country: country,
-        isAlready: true,
+        isAlreadyEditPersonalInformation: true,
+        editTimeEditPersonalInformation: localTimestamp,
       });
 
       console.log('Datos actualizados correctamente');
@@ -260,6 +277,7 @@ const EditPerfilScreen = ({route, navigation}) => {
             style={styles.input}
             placeholder="Escriba su telefono."
             value={phone}
+            onChangeText={text => setPhone(text)}
             placeholderTextColor={'gray'}></TextInput>
           <Text style={styles.title}>Correo electronico: </Text>
           <TextInput
@@ -267,6 +285,7 @@ const EditPerfilScreen = ({route, navigation}) => {
             style={styles.input}
             placeholder="Escriba su correo electronico."
             value={email}
+            onChangeText={text => setEmail(text)}
             placeholderTextColor={'gray'}></TextInput>
           <Text style={styles.title}>Direccion: </Text>
           <TextInput
@@ -274,6 +293,7 @@ const EditPerfilScreen = ({route, navigation}) => {
             style={styles.input}
             placeholder="Escriba su direccion."
             value={address}
+            onChangeText={text => setAddress(text)}
             placeholderTextColor={'gray'}></TextInput>
           <Text style={styles.title}>Ciudad: </Text>
           <TextInput
@@ -281,6 +301,7 @@ const EditPerfilScreen = ({route, navigation}) => {
             style={styles.input}
             placeholder="Escriba su ciudad."
             value={city}
+            onChangeText={text => setCity(text)}
             placeholderTextColor={'gray'}></TextInput>
           <Text style={styles.title}>Pais: </Text>
           <TextInput
@@ -288,9 +309,17 @@ const EditPerfilScreen = ({route, navigation}) => {
             style={styles.input}
             placeholder="Escriba su Pais."
             value={country}
+            onChangeText={text => setCountry(text)}
             placeholderTextColor={'gray'}></TextInput>
-          <TouchableOpacity style={styles.save} disabled={disabled}>
-            <Text style={{color: 'white'}}>Guardar datos</Text>
+          <TouchableOpacity
+            style={styles.save}
+            disabled={disabled}
+            onPress={saveContactInformation}>
+            {updating ? (
+              <ActivityIndicator color={'white'} />
+            ) : (
+              <Text style={{color: 'white'}}>Guardar datos</Text>
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>
