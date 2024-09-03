@@ -283,7 +283,7 @@ const CardWithPubs = ({
                 // <Text style={styles.text}>{data[2]?.id}</Text>
                 <CardPubliShared
                   img={imgperfil}
-                  name={username}
+                  s={username}
                   id_pub={data[2]?.id}
                 />
               ) : (

@@ -8,7 +8,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import { doc, onSnapshot } from '@firebase/firestore';
+import { collection, doc, getDocs, onSnapshot, query, where } from '@firebase/firestore';
 import { db } from '../../config';
 import { useAuth } from '../hooks/Autentication';
 import {
@@ -22,8 +22,9 @@ import Animated, {
   withSpring,
   clamp,
 } from 'react-native-reanimated';
+import { useNavigation } from '@react-navigation/native';
 
-const CardPubliShared = ({ img, id_pub }) => {
+const CardPubliShared = ({ img, id_pub, s }) => {
   const [data, setPubs] = useState([]);
   const [imgperfil, setImgPerfil] = useState('');
   const { user } = useAuth();
@@ -31,6 +32,7 @@ const CardPubliShared = ({ img, id_pub }) => {
   const [name, setName] = useState('');
   const { width, height } = Dimensions.get('screen');
 
+  const navigation = useNavigation();
   const scale = useSharedValue(1);
   const startScale = useSharedValue(0);
 
@@ -57,7 +59,7 @@ const CardPubliShared = ({ img, id_pub }) => {
   }));
 
   useEffect(() => {
-    console.log(id_pub)
+    console.log(s)
     if (id_pub) {
       const docRef = doc(db, 'shared_publication', id_pub);
       const unsubscribe = onSnapshot(
@@ -111,10 +113,34 @@ const CardPubliShared = ({ img, id_pub }) => {
     );
   }
 
+
+  const goToPerfilUser = async text => {
+    const userQuery = query(
+      collection(db, 'users'),
+      where('username', '==', text),
+    );
+    const commentsSnapshot = await getDocs(userQuery);
+    const userData = commentsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    if (userData.length > 0) {
+      // setDataUser(userData[0].id);
+      // onClose();
+      navigation.navigate('MainPageUser', {
+        imgPerfil: img,
+        username: text,
+        idUser: userData[0].id,
+      });
+    } else {
+      Alert.alert('El usuario no existe');
+    }
+  };
+
   return (
     <View style={styles.card}>
       <View style={styles.headercard}>
-        <TouchableOpacity style={styles.nameText}>
+        <TouchableOpacity style={styles.nameText} onPress={() => goToPerfilUser(name)}>
           <Image style={styles.imgPerfil} source={{ uri: imgperfil ? imgperfil : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1' }} />
           <Text style={{ color: 'white', fontWeight: 'bold', marginLeft: 10 }}>{name}</Text>
         </TouchableOpacity>
