@@ -61,7 +61,7 @@ const CardWithAds = ({ ids }) => {
       <View style={styles.card}>
         {adLoaded ? (
           <View style={styles.withoutads}>
-            <Text>
+            <Text style={{color:'white'}}>
               Cargando publicidad una vez cargada se te recompensara por verla
             </Text>
             {loaded ? (

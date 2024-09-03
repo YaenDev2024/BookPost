@@ -39,7 +39,6 @@ const MainPageUser = ({route, navigation}) => {
   const [docFollow, setDocFollow] = useState('');
   const [nameRed, setNameRed] = useState('');
 
-
   useEffect(() => {
     const q = query(
       collection(db, 'perfil_information'),
@@ -66,70 +65,76 @@ const MainPageUser = ({route, navigation}) => {
       const euser = user.email.toLowerCase();
       console.log('Usuario autenticado:', euser);
       setLoading(false);
-  
+
       const q = query(collection(db, 'users'), where('mail', '==', euser));
-  
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        if (querySnapshot.empty) {
-          console.log('No se encontraron datos para el usuario.');
-          setLoading(false);
-          return;
-        }
-        
-        let userDoc = false;
-        let iduserowner = '';
-        querySnapshot.forEach((doc) => {
-          if (doc.id === idUser) {
-            userDoc = true;
-            iduserowner = doc.id;
-            if (doc.data().username.length > 13) {
-              setNameRed(doc.data().username.substring(10, 0) + '...');
-            } else {
-              setNameRed(doc.data().username);
-            }
-          } else {
-            setIdUserOwner(doc.id);
+
+      const unsubscribe = onSnapshot(
+        q,
+        querySnapshot => {
+          if (querySnapshot.empty) {
+            console.log('No se encontraron datos para el usuario.');
+            setLoading(false);
+            return;
           }
-        });
-  
-        if (userDoc) {
-          setUserPerfil(true);
-        } else {
-          setUserPerfil(false);
-          console.log(idUserOwner,'s')
-          const queryFollows = query(
-            collection(db, 'follows'),
-            where('id_user_follow', '==', idUserOwner),
-            where('id_user_followed', '==', idUser)
-          );
-  
-          const unsubscribeFollow = onSnapshot(queryFollows, (followSnapshot) => {
-            if (!followSnapshot.empty) {
-              const followDoc = followSnapshot.docs[0];
-              setIsFollowed(true);
-              setDocFollow(followDoc.id);
+
+          let userDoc = false;
+          let iduserowner = '';
+          querySnapshot.forEach(doc => {
+            if (doc.id === idUser) {
+              userDoc = true;
+              iduserowner = doc.id;
+              if (doc.data().username.length > 13) {
+                setNameRed(doc.data().username.substring(10, 0) + '...');
+              } else {
+                setNameRed(doc.data().username);
+              }
             } else {
-              setIsFollowed(false);
+              setIdUserOwner(doc.id);
+              console.log(doc.id,'si')
+            }
+
+            if (userDoc) {
+              setUserPerfil(true);
+            } else {
+              setUserPerfil(false);
+              console.log(idUserOwner, 's');
+              const queryFollows = query(
+                collection(db, 'follows'),
+                where('id_user_follow', '==', doc.id),
+                where('id_user_followed', '==', idUser),
+              );
+
+              const unsubscribeFollow = onSnapshot(
+                queryFollows,
+                followSnapshot => {
+                  if (!followSnapshot.empty) {
+                    const followDoc = followSnapshot.docs[0];
+                    setIsFollowed(true);
+                    setDocFollow(followDoc.id);
+                  } else {
+                    setIsFollowed(false);
+                  }
+                },
+              );
+
+              
+              return () => {
+                unsubscribeFollow();
+              };
             }
           });
-  
-          // Asegúrate de limpiar el snapshot de follows cuando el componente se desmonte
-          return () => {
-            unsubscribeFollow();
-          };
-        }
-      }, (error) => {
-        console.error('Error al obtener los datos:', error);
-      });
-  
-      // Asegúrate de limpiar el snapshot cuando el componente se desmonte
+        },
+        error => {
+          console.error('Error al obtener los datos:', error);
+        },
+      );
+
       return () => {
         unsubscribe();
       };
     };
-  
+
     const unsubscribe = unsubscribeUserData();
-   
   }, [user]);
 
   const handleShowScreenEditPerfil = () => {
@@ -144,25 +149,18 @@ const MainPageUser = ({route, navigation}) => {
 
   const handleFollowPerfil = async () => {
     if (!isFollowed) {
-      const add = addDoc(collection(db, 'follows'), {
+      await addDoc(collection(db, 'follows'), {
         id_user_follow: idUserOwner,
         id_user_followed: idUser,
+      }).then(() => {
+        setIsFollowed(true);
       });
-
-      // const upquery = query(
-      //   collection(db, 'perfil_information'),
-      //   where('id_user', '==', idUserOwner),
-      // );
-      // const querySnapshot = await getDocs(upquery);
-      // querySnapshot.forEach(doc => {
-      //   var foll = parseInt(doc.data().followed);
-      //   updateDoc(doc.ref, {
-      //     followed: foll + 1,
-      //   });
-      // });
     } else {
       const docRef = doc(db, 'follows', docFollow);
-      await deleteDoc(docRef);
+      await deleteDoc(docRef).then(() => {
+        setIsFollowed(false);
+      });
+      // Actualiza el número de seguidos en Firestore (opcional)
       const upquery = query(
         collection(db, 'perfil_information'),
         where('id_user', '==', idUserOwner),
@@ -234,7 +232,9 @@ const MainPageUser = ({route, navigation}) => {
         <View style={styles.photoContainerUser}>
           <Image
             source={{
-              uri: imgPerfil ? imgPerfil : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1',
+              uri: imgPerfil
+                ? imgPerfil
+                : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1',
             }}
             style={styles.ImgPerfil}
           />
@@ -275,7 +275,11 @@ const MainPageUser = ({route, navigation}) => {
         </View>
         {loading ? null : (
           <TouchableOpacity
-            onPress={isUserPerfil ? () => navigation.navigate('PerfilSettings',{idUser}) : handleFollowPerfil}
+            onPress={
+              isUserPerfil
+                ? () => navigation.navigate('PerfilSettings', {idUser})
+                : handleFollowPerfil
+            }
             disabled={loading}
             style={
               isFollowed
