@@ -12,6 +12,8 @@ import {
 import React, {useEffect, useState} from 'react';
 import {
   Alert,
+  Button,
+  Dimensions,
   Image,
   ScrollView,
   StatusBar,
@@ -24,7 +26,8 @@ import {db} from '../../../config';
 import MaterialC from 'react-native-vector-icons/MaterialCommunityIcons';
 import CardWithoutPubs from '../CardWithoutPubs';
 import {useAuth} from '../../hooks/Autentication';
-
+import ModalChangeInformationUser from './ModalChangeInformationUser';
+const {width, height} = Dimensions.get('screen');
 const MainPageUser = ({route, navigation}) => {
   const {imgPerfil, username, idUser} = route.params;
   const [imgPort, setImgPort] = useState('');
@@ -38,6 +41,10 @@ const MainPageUser = ({route, navigation}) => {
   const [loading, setLoading] = useState(true);
   const [docFollow, setDocFollow] = useState('');
   const [nameRed, setNameRed] = useState('');
+
+  const [show, setShow] =useState(false)
+
+
 
   useEffect(() => {
     const q = query(
@@ -90,7 +97,7 @@ const MainPageUser = ({route, navigation}) => {
               }
             } else {
               setIdUserOwner(doc.id);
-              console.log(doc.id,'si')
+              console.log(doc.id, 'si');
             }
 
             if (userDoc) {
@@ -117,7 +124,6 @@ const MainPageUser = ({route, navigation}) => {
                 },
               );
 
-              
               return () => {
                 unsubscribeFollow();
               };
@@ -211,6 +217,15 @@ const MainPageUser = ({route, navigation}) => {
     fetchFollowers();
   }, []);
 
+  const showModalEdit = () =>{
+    if(show){
+      setShow(false)
+    }else{
+      setShow(true)
+    }
+  }
+
+
   return (
     <View style={styles.MainContainer}>
       <StatusBar
@@ -230,6 +245,10 @@ const MainPageUser = ({route, navigation}) => {
 
       <ScrollView>
         <View style={styles.photoContainerUser}>
+          <TouchableOpacity style={styles.btnChangePhoto} onPress={showModalEdit}>
+            <MaterialC name="camera-flip-outline" size={35} color={'#fff'} />
+          </TouchableOpacity>
+
           <Image
             source={{
               uri: imgPerfil
@@ -246,6 +265,7 @@ const MainPageUser = ({route, navigation}) => {
                 position: 'static',
                 right: 150,
                 width: 100,
+                zIndex: 0,
               }}></View>
             <Image
               source={{
@@ -324,6 +344,7 @@ const MainPageUser = ({route, navigation}) => {
         </View>
         <CardWithoutPubs />
       </ScrollView>
+      {show ? <ModalChangeInformationUser imgperfil={imgPerfil}  imgportada={imgPort} lastinfo={informationUser} goBack={showModalEdit}/> : null}
     </View>
   );
 };
@@ -359,7 +380,7 @@ const styles = StyleSheet.create({
     position: 'static',
     top: 80,
     left: 30,
-    zIndex: 999999,
+    zIndex: 20,
     borderColor: 'white',
     borderWidth: 5,
   },
@@ -448,6 +469,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 10,
     alignSelf: 'center',
+  },
+  btnChangePhoto: {
+    backgroundColor: 'transparent',
+    width: 100,
+    height: 30,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute', // Para posicionar el botón de manera absoluta
+    top: height * 0.27, // Ajusta esto para posicionar el botón
+    left: width * 0.75,
+    // Ajusta esto para posicionar el botón
+    zIndex: 1000, // Asegura que el botón esté encima de las imágenes
   },
 });
 
