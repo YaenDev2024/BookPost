@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
   },
   modalView: {
     width: '100%',
-    height: '100%', // Cambia esto para asegurar que el modal ocupa toda la pantalla
+    height: '100%', 
     backgroundColor: '#353535',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -512,6 +512,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 10,
     marginLeft: 10,
+    color:'gray'
   },
   resUser: {
     fontWeight: 'bold',

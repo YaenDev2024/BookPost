@@ -133,9 +133,8 @@ const CardWithPubs = ({
         const unsubs = onSnapshot(
           doc(db, 'users', docs.data().id_user),
           doct => {
-            
             setImgofuser(doct.data().img_profile);
-            
+
             setUsername(doct.data().username);
           },
         );
@@ -254,85 +253,141 @@ const CardWithPubs = ({
   };
 
   return (
-    <View style={styles.card}>
-      <View style={styles.headercard}>
-        <TouchableOpacity style={{flexDirection:'row', justifyContent:'center', alignItems:'center'}} onPress={() => goToPerfilUser(username)}>
-          <Image style={styles.imgPerfil} source={{uri: imgOfUser ? imgOfUser : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1'}} />
-          <Text style={styles.nameText}>{username}</Text>
-        </TouchableOpacity>
-      </View>
-      <View style={styles.data}>
-        {Array.isArray(data) && data.length > 1 ? (
-          <>
-            <Text style={styles.text}>{data[1].text}</Text>
-            <View style={styles.imageContainer}>
-              {data[0].img.length === 1 ? (
-                <GestureHandlerRootView style={styles.container}>
-                  <GestureDetector gesture={pinch}>
-                    <Animated.View
-                      style={[styles.singleImage, boxAnimatedStyles]}>
-                      <Image
-                        source={{uri: data[0].img[0] ? data[0].img[0] : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1'}}
-                        resizeMode="cover"
-                        style={styles.singleImage}
-                      />
-                    </Animated.View>
-                  </GestureDetector>
-                </GestureHandlerRootView>
-              ) : data[2]?.id.length > 0 ? (
-                // <Text style={styles.text}>{data[2]?.id}</Text>
-                <CardPubliShared
-                  img={imgperfil}
-                  s={username}
-                  id_pub={data[2]?.id}
-                />
-              ) : (
-                data[0].img.map((item, index) => (
+    <View style={styles.container}>
+      <View style={styles.card}>
+        <View style={styles.headercard}>
+          <TouchableOpacity
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+            onPress={() => goToPerfilUser(username)}>
+            <Image
+              style={styles.imgPerfil}
+              source={{
+                uri: imgOfUser
+                  ? imgOfUser
+                  : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1',
+              }}
+            />
+            <Text style={styles.nameText}>{username}</Text>
+          </TouchableOpacity>
+          <View
+            style={{
+              left: 50,
+              bottom: 5,
+              justifyContent: 'center',
+              alignContent: 'center',
+            }}>
+            <View style={{flexDirection:'row'}}>
+              <Text
+                style={{textAlign: 's', right: 0, bottom: 20, fontSize: 11}}>
+                Hace un minuto
+                <View
+                  style={{
+                    borderRadius: 100,
+                    position: 'absolute',
+                    left: 10,
+                  }}>
+                  <Text style={{top: 2, marginLeft: 3, marginRight: 2}}>.</Text>
+                </View>
+              </Text>
+              <View style={{bottom:13}}>
+                <MaterialC name="earth" size={14} color={'#e3e3e3'} />
+              </View>
+            </View>
+          </View>
+        </View>
+        <View style={styles.data}>
+          {Array.isArray(data) && data.length > 1 ? (
+            <>
+              <Text style={styles.text}>{data[1].text}</Text>
+              <View style={styles.imageContainer}>
+                {data[0].img.length === 1 ? (
                   <GestureHandlerRootView style={styles.container}>
                     <GestureDetector gesture={pinch}>
                       <Animated.View
                         style={[styles.singleImage, boxAnimatedStyles]}>
                         <Image
-                          key={index}
-                          source={{uri: item ? item : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1'}}
-                          style={[
-                            styles.multiImage,
-                            {marginRight: (index + 1) % 2 === 0 ? 0 : 5},
-                          ]}
+                          source={{
+                            uri: data[0].img[0]
+                              ? data[0].img[0]
+                              : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1',
+                          }}
                           resizeMode="cover"
+                          style={styles.singleImage}
                         />
                       </Animated.View>
                     </GestureDetector>
                   </GestureHandlerRootView>
-                ))
-              )}
-            </View>
-          </>
-        ) : (
-          <Text style={styles.text}>{data}</Text>
-        )}
-        <TouchableOpacity style={styles.dataCom} onPress={handleShowComments}>
-          <Text style={styles.commnets}>{comments.length} comentario</Text>
-        </TouchableOpacity>
-      </View>
-      <View style={styles.footercard}>
-        {!isLiked ? (
-          <TouchableOpacity style={{marginRight: 10}} onPress={saveLike}>
-            <MaterialC name="cards-heart-outline" size={25} color={'#e3e3e3'} />
+                ) : data[2]?.id.length > 0 ? (
+                  // <Text style={styles.text}>{data[2]?.id}</Text>
+                  <CardPubliShared
+                    img={imgperfil}
+                    s={username}
+                    id_pub={data[2]?.id}
+                  />
+                ) : (
+                  data[0].img.map((item, index) => (
+                    <GestureHandlerRootView style={styles.container}>
+                      <GestureDetector gesture={pinch}>
+                        <Animated.View
+                          style={[styles.singleImage, boxAnimatedStyles]}>
+                          <Image
+                            key={index}
+                            source={{
+                              uri: item
+                                ? item
+                                : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1',
+                            }}
+                            style={[
+                              styles.multiImage,
+                              {marginRight: (index + 1) % 2 === 0 ? 0 : 5},
+                            ]}
+                            resizeMode="cover"
+                          />
+                        </Animated.View>
+                      </GestureDetector>
+                    </GestureHandlerRootView>
+                  ))
+                )}
+              </View>
+            </>
+          ) : (
+            <Text style={styles.text}>{data}</Text>
+          )}
+          <TouchableOpacity style={styles.dataCom} onPress={handleShowComments}>
+            <Text style={styles.commnets}>{comments.length} comentario</Text>
           </TouchableOpacity>
-        ) : (
-          <TouchableOpacity style={{marginRight: 10}} onPress={saveLike}>
-            <MaterialC name="cards-heart" size={25} color={'red'} />
+        </View>
+        <View style={styles.footercard}>
+          {!isLiked ? (
+            <TouchableOpacity style={{marginRight: 10}} onPress={saveLike}>
+              <MaterialC
+                name="cards-heart-outline"
+                size={25}
+                color={'#e3e3e3'}
+              />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={{marginRight: 10}} onPress={saveLike}>
+              <MaterialC name="cards-heart" size={25} color={'red'} />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={{marginRight: 10}}
+            onPress={handleShowComments}>
+            <MaterialC name="message-outline" size={25} color={'#e3e3e3'} />
           </TouchableOpacity>
-        )}
-        <TouchableOpacity
-          style={{marginRight: 10}}
-          onPress={handleShowComments}>
-          <MaterialC name="message-outline" size={25} color={'#e3e3e3'} />
-        </TouchableOpacity>
-        <TouchableOpacity style={{marginRight: 10}} onPress={handleSharePost}>
-          <MaterialC name="share-variant-outline" size={25} color={'#e3e3e3'} />
-        </TouchableOpacity>
+          <TouchableOpacity style={{marginRight: 10}} onPress={handleSharePost}>
+            <MaterialC
+              name="share-variant-outline"
+              size={25}
+              color={'#e3e3e3'}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -344,17 +399,17 @@ const styles = StyleSheet.create({
     margin: -5,
     width: '100%',
     padding: 10,
-    marginBottom: 15,
+    marginBottom: 10,
   },
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    width: 400
   },
   headercard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
   },
   imgPerfil: {
     height: 40,
@@ -366,11 +421,12 @@ const styles = StyleSheet.create({
   nameText: {
     flex: 1,
     marginLeft: 10,
+    marginBottom: 20,
     color: 'white',
     fontWeight: '500',
   },
   data: {
-    padding: 10,
+    paddingLeft: 0,
   },
   text: {
     color: 'white',
@@ -382,9 +438,10 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   singleImage: {
-    width: '100%',
+    width: 900,
     height: 500,
     borderRadius: 10,
+    objectFit:'contain'
   },
   multiImage: {
     width: '48%',

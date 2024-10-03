@@ -162,6 +162,8 @@ const SharePubModal = ({visible, onClose, imgPerfil, user, idUser, idpub}) => {
             </View>
             <View style={styles.containerInput}>
               <TextInput
+              placeholderTextColor={'gray'}
+              style={{color:'white'}}
                 placeholder="Escribe lo que piensas"
                 multiline={true}
                 onChangeText={text => setText(text)}></TextInput>

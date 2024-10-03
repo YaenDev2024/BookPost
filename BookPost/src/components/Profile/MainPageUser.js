@@ -27,6 +27,7 @@ import MaterialC from 'react-native-vector-icons/MaterialCommunityIcons';
 import CardWithoutPubs from '../CardWithoutPubs';
 import {useAuth} from '../../hooks/Autentication';
 import ModalChangeInformationUser from './ModalChangeInformationUser';
+import { ModalToSeeFullPic } from './ModalToSeeFullPic';
 const {width, height} = Dimensions.get('screen');
 const MainPageUser = ({route, navigation}) => {
   const {imgPerfil, username, idUser} = route.params;
@@ -41,12 +42,18 @@ const MainPageUser = ({route, navigation}) => {
   const [loading, setLoading] = useState(true);
   const [docFollow, setDocFollow] = useState('');
   const [nameRed, setNameRed] = useState('');
+  const [showImgPerfil, setShowImgPerfil] = useState(false);
 
-  const [show, setShow] =useState(false)
+  const [show, setShow] = useState(false);
+
+  const onClose = () =>{
+    setShowImgPerfil(false);
+  }
 
 
 
   useEffect(() => {
+    console.log('user perfil:', idUser);
     const q = query(
       collection(db, 'perfil_information'),
       where('id_user', '==', idUser),
@@ -61,6 +68,7 @@ const MainPageUser = ({route, navigation}) => {
     });
     return () => unsub();
   }, []);
+
 
   useEffect(() => {
     const unsubscribeUserData = () => {
@@ -217,14 +225,13 @@ const MainPageUser = ({route, navigation}) => {
     fetchFollowers();
   }, []);
 
-  const showModalEdit = () =>{
-    if(show){
-      setShow(false)
-    }else{
-      setShow(true)
+  const showModalEdit = () => {
+    if (show) {
+      setShow(false);
+    } else {
+      setShow(true);
     }
-  }
-
+  };
 
   return (
     <View style={styles.MainContainer}>
@@ -245,19 +252,24 @@ const MainPageUser = ({route, navigation}) => {
 
       <ScrollView>
         <View style={styles.photoContainerUser}>
-          <TouchableOpacity style={styles.btnChangePhoto} onPress={showModalEdit}>
-            <MaterialC name="camera-flip-outline" size={35} color={'#fff'} />
+          {!isUserPerfil ? null : (
+            <TouchableOpacity
+              style={styles.btnChangePhoto}
+              onPress={showModalEdit}>
+              <MaterialC name="camera-flip-outline" size={35} color={'#fff'} />
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity onPress={() => setShowImgPerfil(true)}>
+            <Image
+              source={{
+                uri: imgPerfil
+                  ? imgPerfil
+                  : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1',
+              }}
+              style={styles.ImgPerfil}
+            />
           </TouchableOpacity>
-
-          <Image
-            source={{
-              uri: imgPerfil
-                ? imgPerfil
-                : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1',
-            }}
-            style={styles.ImgPerfil}
-          />
-
           <View style={{flexDirection: 'row'}}>
             <View
               style={{
@@ -265,7 +277,7 @@ const MainPageUser = ({route, navigation}) => {
                 position: 'static',
                 right: 150,
                 width: 100,
-                zIndex: 0,
+                zIndex: -1999,
               }}></View>
             <Image
               source={{
@@ -344,7 +356,17 @@ const MainPageUser = ({route, navigation}) => {
         </View>
         <CardWithoutPubs />
       </ScrollView>
-      {show ? <ModalChangeInformationUser imgperfil={imgPerfil}  imgportada={imgPort} lastinfo={informationUser} goBack={showModalEdit}/> : null}
+      {show ? (
+        <ModalChangeInformationUser
+          imgperfil={imgPerfil}
+          imgportada={imgPort}
+          lastinfo={informationUser}
+          goBack={showModalEdit}
+        />
+      ) : null}
+      {showImgPerfil ? (
+        <ModalToSeeFullPic onClose={onClose} uri={imgPerfil} />
+      ) : null}
     </View>
   );
 };

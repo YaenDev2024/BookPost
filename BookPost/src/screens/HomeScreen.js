@@ -43,6 +43,7 @@ import {
   useForeground,
 } from 'react-native-google-mobile-ads';
 import CardWithAds from '../components/CardWithAds';
+import NativeAdView from "react-native-admob-native-ads";
 
 const {height} = Dimensions.get('screen');
 const {width} = Dimensions.get('screen');
@@ -85,6 +86,13 @@ const HomeScreen = ({navigation}) => {
       idUser: idUser,
     });
   };
+
+
+ 
+
+  
+
+
 
   useEffect(() => {
     setLoad(true);
@@ -211,35 +219,44 @@ const HomeScreen = ({navigation}) => {
       console.error('Error al cargar más publicaciones:', error);
     }
   };
+  const combineDataWithAds = (pubs) => {
+    const dataWithAds = [];
+    pubs.forEach((pub, index) => {
+        dataWithAds.push(pub);
+        // Insertar un anuncio después de cada 3 publicaciones
+        if ((index + 1) % 2 === 0) {
+            dataWithAds.push({ isAd: true, id: `ad-${index}` }); // Identificador único para el anuncio
+        }
+    });
+    return dataWithAds;
+};
 
+const combinedData = combineDataWithAds(dataPubs);
   const bannerRef = useRef(null);
   useForeground(() => {
     Platform.OS === 'ios' && bannerRef.current?.load();
   });
-  const renderItem = ({item, index}) => {
-    if (index % 3 === 2) {
-      // Show ad every 2 items (0-based index, so 2 means after 2 items)
-      return <CardWithAds ids={index} key={index} />;
-    }
-    if (!existPub) {
-      return <CardWithoutPubs style={styles.card} />;
+  const renderItem = ({ item }) => {
+    if (item.isAd) {
+        return <CardWithAds key={item.id} />;
     }
     return (
-      <CardWithPubs
-        likes={item.likes}
-        commentsqty={item.commnets_qty}
-        data={item.data}
-        datecreated={item.datecreate}
-        img={item.img_perfil}
-        id_user={item.id_user}
-        id_pub={item.id}
-        style={styles.card}
-        setVisible={setVisible}
-        shareVisible={setShareVisible}
-        sendid={getData}
-      />
+        <CardWithPubs
+            key={item.id}
+            likes={item.likes}
+            commentsqty={item.commnets_qty}
+            data={item.data}
+            datecreated={item.datecreate}
+            img={item.img_perfil}
+            id_user={item.id_user}
+            id_pub={item.id}
+            style={styles.card}
+            setVisible={setVisible}
+            shareVisible={setShareVisible}
+            sendid={getData}
+        />
     );
-  };
+};
 
   const flatListRef = useRef(null);
 
@@ -298,8 +315,8 @@ const HomeScreen = ({navigation}) => {
 
           <FlatList
             style={styles.scrollView}
-            data={dataPubs}
-            keyExtractor={item => item.id}
+            data={combinedData}
+            keyExtractor={item => item.isAd ? item.id : item.id}
             renderItem={renderItem}
             onEndReached={loadMorePubs}
             onEndReachedThreshold={0.1}
@@ -307,6 +324,7 @@ const HomeScreen = ({navigation}) => {
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
             ref={flatListRef}
+            showsVerticalScrollIndicator={false}
           />
 
           {/* <ScrollView
@@ -397,7 +415,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#272727',
     alignItems: 'center',
     flex: 1,
-    width: '100%',
   },
   scrollView: {
     width: '100%',

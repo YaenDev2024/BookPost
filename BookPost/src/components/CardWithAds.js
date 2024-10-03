@@ -20,12 +20,12 @@ const { width } = Dimensions.get('window');
 const BANNER_WIDTH = width - 20; // Ajusta según el diseño
 
 const CardWithAds = ({ ids }) => {
-  const adUnitId = !__DEV__ ? TestIds.BANNER : 'ca-app-pub-3477493054350988/4075718325';
+  const adUnitId = !__DEV__ ? TestIds.ADAPTIVE_BANNER : 'ca-app-pub-3477493054350988/4075718325W';
   const bannerRef = useRef(null);
 
   const [loaded, setLoaded] = useState(false);
   const [adLoaded, setAdLoaded] = useState(true);
-  const fadeAnim = useRef(new Animated.Value(0)).current; // Valor inicial de opacidad
+  const fadeAnim = useRef(new Animated.Value(0)).current; 
 
   useForeground(() => {
     Platform.OS === 'ios' && bannerRef.current?.load();
@@ -33,7 +33,7 @@ const CardWithAds = ({ ids }) => {
 
   useEffect(() => {
     if (!adLoaded) {
-      // Inicia la animación de desvanecimiento solo cuando adLoaded es false
+     
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 1000,
@@ -76,10 +76,11 @@ const CardWithAds = ({ ids }) => {
           </View>
         ) : (
           <Animated.View style={[styles.adContainer, { opacity: fadeAnim }]}>
+            <Text>Publicidad pagada: $0.01</Text>
             <BannerAd
               ref={bannerRef}
               unitId={adUnitId}
-              size={BannerAdSize.INLINE_ADAPTIVE_BANNER}
+              size={BannerAdSize.MEDIUM_RECTANGLE}
               key={ids}
             />
           </Animated.View>
@@ -92,7 +93,6 @@ const CardWithAds = ({ ids }) => {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    marginVertical: 15,
   },
   card: {
     backgroundColor: '#353535',
@@ -106,8 +106,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 8,
-    marginTop: -25,
-    marginBottom: -5,
+    marginTop: -5,
+    marginBottom: 10,
     flexDirection: 'row',
     height:400
   },

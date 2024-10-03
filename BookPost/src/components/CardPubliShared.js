@@ -128,7 +128,7 @@ const CardPubliShared = ({ img, id_pub, s }) => {
       // setDataUser(userData[0].id);
       // onClose();
       navigation.navigate('MainPageUser', {
-        imgPerfil: img,
+        imgPerfil: userData[0].img_profile,
         username: text,
         idUser: userData[0].id,
       });
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     margin: -5,
     width: '100%',
     padding: 10,
-    marginBottom: 15,
+    marginBottom: 1,
   },
   headercard: {
     flexDirection: 'row',
