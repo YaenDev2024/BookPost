@@ -113,6 +113,7 @@ const Login = ({ navigation }) => {
               style={emptyInput ? styles.inputFail : styles.input}
               onChangeText={handleUser}
               placeholder="Enter your email"
+              placeholderTextColor={'gray'}
               value={user}
             />
             <Text style={styles.label}>Password:</Text>

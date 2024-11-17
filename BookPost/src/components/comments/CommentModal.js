@@ -322,6 +322,7 @@ const VerticalPanResponder = ({idpub, onClose, id, img_profile, username}) => {
           <>
             <View style={styles.centeredView}>
               <View style={styles.modalView}>
+              <View style={styles.handle} {...panResponder.panHandlers}/>
                 <View style={styles.headerlikes} {...panResponder.panHandlers}>
                   {isOneLike ? (
                     <>
@@ -432,6 +433,14 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%', // Asegúrate de que ocupa todo el alto de la pantalla
   },
+  handle: {
+        width: 50,
+        height: 5,
+        backgroundColor: '#888',
+        borderRadius: 2.5,
+        alignSelf: 'center',
+        marginBottom: 15,
+    },
   header: {
     padding: 10,
     backgroundColor: '#eee',
@@ -454,9 +463,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   centeredView: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
   },
@@ -464,8 +470,8 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%', 
     backgroundColor: '#353535',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
     paddingTop: 10,
     elevation: 5,
     paddingLeft: 10,

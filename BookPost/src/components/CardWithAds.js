@@ -80,7 +80,7 @@ const CardWithAds = ({ ids }) => {
             <BannerAd
               ref={bannerRef}
               unitId={adUnitId}
-              size={BannerAdSize.MEDIUM_RECTANGLE}
+              size={BannerAdSize.FULL_BANNER}
               key={ids}
             />
           </Animated.View>

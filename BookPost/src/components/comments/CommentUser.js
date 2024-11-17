@@ -171,6 +171,7 @@ const CommentUser = ({user, data, img, date, iddoc, sendIdcomment, onClose}) => 
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
+    width: '100%',
   },
   imgperfil: {
     width: 40,

@@ -35,6 +35,8 @@ import Animated, {
 import CardPubliShared from './CardPubliShared';
 import {useNavigation} from '@react-navigation/native';
 
+const {width} = Dimensions.get('screen');
+
 const CardWithPubs = ({
   img,
   data,
@@ -44,17 +46,19 @@ const CardWithPubs = ({
   sendid,
   shareVisible,
   id_user,
+  timeAgo,
+  isVisibleOptions
 }) => {
   const [comments, setComments] = useState([]);
   const [isLiked, setLiked] = useState(false);
   const {user} = useAuth();
   const [userid, setUserID] = useState('');
-  const {width} = Dimensions.get('screen');
   const [imgperfil, setImgPerfil] = useState('');
   const [imgOfUser, setImgofuser] = useState('');
   const [username, setUsername] = useState('');
-
+  const [dateTimeNow, setDateTimeNow] = useState('');
   const navigation = useNavigation();
+  const [timeInMinutes, setTimeInMinutes] = useState('');
 
   useEffect(() => {
     const commentsQuery = query(
@@ -122,25 +126,39 @@ const CardWithPubs = ({
   }, [id_pub, userid]);
 
   useEffect(() => {
+    // Query de las publicaciones
     const q = query(
       collection(db, 'publications'),
       where('id_user', '==', id_user),
     );
 
     const unsuscribe = onSnapshot(q, querySnapshot => {
-      const updatedProducts = [];
       querySnapshot.forEach(docs => {
         const unsubs = onSnapshot(
           doc(db, 'users', docs.data().id_user),
           doct => {
             setImgofuser(doct.data().img_profile);
-
+            //setDateTimeNow(docs.data().datecreated);
             setUsername(doct.data().username);
+
+            // // Actualizar el tiempo inmediatamente
+            // if (docs.data().datecreated) {
+            //   setTimeInMinutes(formatTimeRemaining(docs.data().datecreated));
+            // }
           },
         );
       });
     });
-  }, []);
+
+    // Crear un intervalo para actualizar el tiempo cada minuto
+  }, [id_user]); // Solo depende de id_user
+
+  // Agregar otro useEffect para actualizar el tiempo cuando dateTimeNow cambie
+  // useEffect(() => {
+  //   if (dateTimeNow) {
+  //     setTimeInMinutes(formatTimeRemaining(dateTimeNow));
+  //   }
+  // }, [dateTimeNow]);
 
   const handleShowComments = () => {
     setVisible(prev => !prev);
@@ -256,48 +274,32 @@ const CardWithPubs = ({
     <View style={styles.container}>
       <View style={styles.card}>
         <View style={styles.headercard}>
-          <TouchableOpacity
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-            onPress={() => goToPerfilUser(username)}>
-            <Image
-              style={styles.imgPerfil}
-              source={{
-                uri: imgOfUser
-                  ? imgOfUser
-                  : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1',
-              }}
-            />
-            <Text style={styles.nameText}>{username}</Text>
-          </TouchableOpacity>
-          <View
-            style={{
-              left: 50,
-              bottom: 5,
-              justifyContent: 'center',
-              alignContent: 'center',
-            }}>
-            <View style={{flexDirection:'row'}}>
-              <Text
-                style={{textAlign: 's', right: 0, bottom: 20, fontSize: 11}}>
-                Hace un minuto
-                <View
-                  style={{
-                    borderRadius: 100,
-                    position: 'absolute',
-                    left: 10,
-                  }}>
-                  <Text style={{top: 2, marginLeft: 3, marginRight: 2}}>.</Text>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity
+              style={styles.userInfo}
+              onPress={() => goToPerfilUser(username)}>
+              <Image
+                style={styles.imgPerfil}
+                source={{
+                  uri: imgOfUser
+                    ? imgOfUser
+                    : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1',
+                }}
+              />
+              <View style={styles.userTextContainer}>
+                <Text style={styles.nameText}>{username}</Text>
+                <View style={styles.timeContainer}>
+                  <Text style={styles.timeText}>{timeAgo}</Text>
+                  <Text style={styles.dot}>·</Text>
+                  <MaterialC name="earth" size={14} color={'#e3e3e3'} />
                 </View>
-              </Text>
-              <View style={{bottom:13}}>
-                <MaterialC name="earth" size={14} color={'#e3e3e3'} />
               </View>
-            </View>
+            </TouchableOpacity>
           </View>
+
+          <TouchableOpacity style={styles.moreButton} onPress={isVisibleOptions}>
+            <MaterialC name="dots-vertical" size={20} color={'#e3e3e3'} />
+          </TouchableOpacity>
         </View>
         <View style={styles.data}>
           {Array.isArray(data) && data.length > 1 ? (
@@ -405,7 +407,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    width: 400
+    width: width + 9,
   },
   headercard: {
     flexDirection: 'column',
@@ -431,7 +433,8 @@ const styles = StyleSheet.create({
   text: {
     color: 'white',
     fontWeight: '500',
-    marginBottom: 10,
+    marginBottom: 25,
+    marginTop: 5,
   },
   imageContainer: {
     flexDirection: 'row',
@@ -441,7 +444,7 @@ const styles = StyleSheet.create({
     width: 900,
     height: 500,
     borderRadius: 10,
-    objectFit:'contain'
+    objectFit: 'contain',
   },
   multiImage: {
     width: '48%',
@@ -462,6 +465,53 @@ const styles = StyleSheet.create({
   commnets: {
     color: 'white',
     fontWeight: '500',
+  },
+  headercard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingVertical: 10,
+    width: '100%',
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  imgPerfil: {
+    height: 40,
+    width: 40,
+    borderRadius: 20,
+    borderColor: 'white',
+    borderWidth: 1,
+  },
+  userTextContainer: {
+    marginLeft: 10,
+    flex: 1,
+  },
+  nameText: {
+    color: 'white',
+    fontWeight: '500',
+    fontSize: 14,
+  },
+  timeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  timeText: {
+    color: '#e3e3e3',
+    fontSize: 11,
+  },
+  dot: {
+    color: '#e3e3e3',
+    marginHorizontal: 4,
+    fontSize: 11,
+  },
+  moreButton: {
+    padding: 5,
   },
 });
 

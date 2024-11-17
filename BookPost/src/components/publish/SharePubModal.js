@@ -146,24 +146,35 @@ const SharePubModal = ({visible, onClose, imgPerfil, user, idUser, idpub}) => {
     <Modal
       visible={visible}
       transparent={true}
-      animationType="slide"
+      animationType="none"
       onRequestClose={onClose}>
-      <Animated.View
-        style={[styles.container, {transform: [{translateY: pan}]}]}>
-        <View style={styles.overlay}>
-          <View style={styles.modalContainer} {...panResponder.panHandlers}>
+      <TouchableOpacity
+        style={styles.overlay}
+        activeOpacity={1}
+        onPress={onClose}>
+        <Animated.View
+          style={[styles.container, {transform: [{translateY: pan}]}]}
+          {...panResponder.panHandlers}>
+          <View style={styles.modalContainer}>
             <View style={styles.headerModal}>
-              <View style={styles.line}></View>
+              <View style={styles.handle} />
             </View>
 
             <View style={styles.containerUser}>
-              <Image style={styles.imgPerfil} source={{uri: imgPerfil ? imgPerfil : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1'}} />
+              <Image
+                style={styles.imgPerfil}
+                source={{
+                  uri: imgPerfil
+                    ? imgPerfil
+                    : 'https://firebasestorage.googleapis.com/v0/b/bookpost-5011d.appspot.com/o/perfilpred.jpg?alt=media&token=3a1941b8-061d-4495-bad7-884f887832a1',
+                }}
+              />
               <Text style={styles.hname}>{user}</Text>
             </View>
             <View style={styles.containerInput}>
               <TextInput
-              placeholderTextColor={'gray'}
-              style={{color:'white'}}
+                placeholderTextColor={'gray'}
+                style={{color: 'white'}}
                 placeholder="Escribe lo que piensas"
                 multiline={true}
                 onChangeText={text => setText(text)}></TextInput>
@@ -173,13 +184,13 @@ const SharePubModal = ({visible, onClose, imgPerfil, user, idUser, idpub}) => {
             <View style={styles.footerbtn}>
               {disabled ? null : (
                 <TouchableOpacity style={styles.btnShare} onPress={sharePost}>
-                  <Text>Compartir</Text>
+                  <Text style={{color:'white'}}>Compartir</Text>
                 </TouchableOpacity>
               )}
             </View>
           </View>
-        </View>
-      </Animated.View>
+        </Animated.View>
+      </TouchableOpacity>
     </Modal>
   );
 };
@@ -191,19 +202,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   overlay: {
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.0)',
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'flex-end',
   },
   modalContainer: {
     width: '100%',
     padding: 20,
-    backgroundColor: '#353535',
+    backgroundColor: '#2c2c2e',
     borderRadius: 20,
     height: 350,
-    borderColor:'gray',
-    borderWidth: 1,
   },
   modalTitle: {
     fontSize: 18,
@@ -231,11 +239,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  line: {
-    width: '30%',
+  handle: {
+    width: 50,
     height: 5,
-    backgroundColor: '#6d6d6d',
+    backgroundColor: '#888',
     borderRadius: 2.5,
+    alignSelf: 'center',
+    marginBottom: 15,
   },
   containerUser: {
     flexDirection: 'row',
@@ -257,7 +267,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     padding: 10,
-    marginBottom: 20,
+    marginBottom: 7
   },
   hname: {
     color: 'white',

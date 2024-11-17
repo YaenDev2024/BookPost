@@ -44,6 +44,9 @@ import {
 } from 'react-native-google-mobile-ads';
 import CardWithAds from '../components/CardWithAds';
 import NativeAdView from "react-native-admob-native-ads";
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
+import ModalOptionsPub from '../components/Publications/ModalOptionsPub';
 
 const {height} = Dimensions.get('screen');
 const {width} = Dimensions.get('screen');
@@ -56,13 +59,21 @@ const HomeScreen = ({navigation}) => {
   const [existPub, setExistPub] = useState(false);
   const [count, setCount] = useState(0);
   const [isVisible, setVisible] = useState(false);
+  const [isVisibleOptions, setVisibleOptions] = useState(false);
   const [dataidpub, setDataidpub] = useState('');
   const [visibleModalPub, setVisibleModalPub] = useState(false);
   const [username, setUsername] = useState('');
   const [isShareVisible, setShareVisible] = useState(false);
   const [idUser, setIdUser] = useState('');
   const [lastVisible, setLastVisible] = useState(null);
-
+  function formatTimeRemaining(timestamp) {
+    const date = new Date((timestamp.seconds * 1000) + (timestamp.nanoseconds / 1000000));
+    
+    return formatDistanceToNow(date, { 
+      addSuffix: true,
+      locale: es // Para tener el resultado en español
+    });
+  }
   const adUnitId = __DEV__
     ? TestIds.ADAPTIVE_BANNER
     : 'ca-app-pub-3477493054350988/4075718325';
@@ -179,7 +190,9 @@ const HomeScreen = ({navigation}) => {
   const setModalOpen = () => {
     setVisibleModalPub(true);
   };
-
+  const setVisibleOptionsOn = () => {
+    setVisibleOptions(true);
+  };
   const loadMorePubs = async () => {
     if (!lastVisible) {
       scrollToTop();
@@ -231,12 +244,20 @@ const HomeScreen = ({navigation}) => {
     return dataWithAds;
 };
 
+
+
+
+
 const combinedData = combineDataWithAds(dataPubs);
   const bannerRef = useRef(null);
   useForeground(() => {
     Platform.OS === 'ios' && bannerRef.current?.load();
   });
   const renderItem = ({ item }) => {
+
+    console.log(item);
+
+
     if (item.isAd) {
         return <CardWithAds key={item.id} />;
     }
@@ -254,6 +275,8 @@ const combinedData = combineDataWithAds(dataPubs);
             setVisible={setVisible}
             shareVisible={setShareVisible}
             sendid={getData}
+            timeAgo={formatTimeRemaining(item.datecreated)}
+            isVisibleOptions = {setVisibleOptionsOn}
         />
     );
 };
@@ -381,6 +404,14 @@ const combinedData = combineDataWithAds(dataPubs);
               ))
             )}
           </ScrollView> */}
+          {setVisibleOptions ? (
+            <ModalOptionsPub
+              visible={isVisibleOptions}
+              onClose={() => setVisibleOptions(false)}
+              isUser={true}
+            />
+          ) : null}
+
           {isVisible ? (
             //id, img_profile, username
             <VerticalPanResponder idpub={dataidpub} onClose={closeModal} />
